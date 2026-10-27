@@ -149,6 +149,7 @@ public class WrapperDistributionIntegrationTest {
     Assert.assertTrue(wrapperConf.contains("org.smallmind.test.SampleWrapperListener"), "the wrapper listener was not interpolated into wrapper.conf");
     Assert.assertFalse(wrapperConf.contains("wrapper.startup.timeout="), "an unset startup timeout should leave the wrapper default in place");
     Assert.assertFalse(wrapperConf.contains("spark.startup.ceiling="), "an unset startup ceiling should leave the listener default in place");
+    Assert.assertFalse(wrapperConf.contains("spark.per.application.scope="), "an unset per-application scope flag should leave the scope off");
   }
 
   // A build that turns on the optional settings: a license and extra configuration files, JVM memory/args, a run-as
@@ -220,6 +221,7 @@ public class WrapperDistributionIntegrationTest {
     TanukisoftPluginSupport.setField(mojo, "jvmMaxMemoryMB", "256");
     TanukisoftPluginSupport.setField(mojo, "startupTimeoutSeconds", 120);
     TanukisoftPluginSupport.setField(mojo, "startupCeilingSeconds", 1200);
+    TanukisoftPluginSupport.setField(mojo, "perApplicationScope", Boolean.TRUE);
     TanukisoftPluginSupport.setField(mojo, "runAs", "appuser");
     TanukisoftPluginSupport.setField(mojo, "appParameters", new String[] {"--profile", "production"});
     TanukisoftPluginSupport.setField(mojo, "envArgs", new EnvironmentArgument[] {environmentArgument});
@@ -256,6 +258,7 @@ public class WrapperDistributionIntegrationTest {
     Assert.assertTrue(wrapperConf.contains("wrapper.java.maxmemory=256"), "max memory was not rendered");
     Assert.assertTrue(wrapperConf.contains("wrapper.startup.timeout=120"), "the startup timeout was not rendered");
     Assert.assertTrue(wrapperConf.contains("spark.startup.ceiling=1200"), "the startup ceiling was not rendered");
+    Assert.assertTrue(wrapperConf.contains("spark.per.application.scope=true"), "the per-application scope flag was not rendered");
     Assert.assertTrue(wrapperConf.contains("set.APP_HOME=/opt/sample-app"), "the environment argument was not rendered");
     Assert.assertTrue(wrapperConf.contains("appuser"), "the run-as account was not rendered");
     Assert.assertTrue(wrapperConf.contains("runtime-1.0.jar"), "the explicit classpath entry was not rendered");

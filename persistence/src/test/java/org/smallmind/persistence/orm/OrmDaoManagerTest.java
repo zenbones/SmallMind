@@ -32,104 +32,134 @@
  */
 package org.smallmind.persistence.orm;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import org.mockito.Mockito;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.persistence.AbstractDurable;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * Exercises {@link OrmDaoManager} registration and lookup. The registry is backed by
- * {@link PerApplicationContext}, so each test attaches a fresh per-application context to the thread
- * first (matching {@code ByKeyRosterTest}). Covers simple-name versus fully-qualified-name resolution
- * in {@link OrmDaoManager#findDurableClass}, the absent-name {@code null} result, and both
- * {@link OrmDaoManager#get(String)} and {@link OrmDaoManager#get(Class)} resolution paths.
+ * Exercises the bridge semantics of {@link OrmDaoManager}: registration lands in every bound registry, lookups read
+ * the scope first and fall back to the context, a scope-only thread never touches the context, and a thread with
+ * neither binding fails through the context flavor.
  */
 @Test(groups = "unit")
 public class OrmDaoManagerTest {
 
+  // The test thread carries an inherited PerApplicationContext shared with every other test on it, so the scope-only
+  // and unbound cases can only be observed on a thread that does not inherit it.
+  private static <T> T onIsolatedThread (Callable<T> body)
+    throws Exception {
+
+    AtomicReference<T> result = new AtomicReference<>();
+    AtomicReference<Throwable> failure = new AtomicReference<>();
+    Thread thread = Thread.ofPlatform().name("isolated-probe").daemon(false).inheritInheritableThreadLocals(false).unstarted(() -> {
+      try {
+        result.set(body.call());
+      } catch (Throwable throwable) {
+        failure.set(throwable);
+      }
+    });
+
+    thread.start();
+    thread.join();
+
+    if (failure.get() != null) {
+      if (failure.get() instanceof Exception) {
+        throw (Exception)failure.get();
+      }
+      throw (Error)failure.get();
+    }
+
+    return result.get();
+  }
+
   @BeforeMethod
   public void attachApplicationContext () {
 
-    // OrmDaoManager reads PerApplicationContext, which throws unless a context map is bound to this
-    // thread. The thread-local map is reused across calls (and shared with other test classes on the
-    // same thread), so install a fresh, empty registry per method to keep the absent-lookup cases honest.
     new PerApplicationContext();
-    PerApplicationContext.setPerApplicationData(OrmDaoManager.class, new ConcurrentHashMap<>());
+    PerApplicationContext.setPerApplicationData(OrmDaoContextManager.class, new ConcurrentHashMap<>());
   }
 
   @SuppressWarnings("unchecked")
-  public void testFindDurableClassMatchesBySimpleName () {
+  public void testRegisterWithBothBoundWritesBothRegistries () {
 
-    OrmDaoManager.register(Widget.class, Mockito.mock(ORMDao.class));
+    PerApplicationScope scope = new PerApplicationScope();
+    ORMDao<Long, Widget, ?, ?> widgetDao = Mockito.mock(ORMDao.class);
 
-    Assert.assertEquals(OrmDaoManager.findDurableClass("Widget"), Widget.class);
+    scope.run(() -> OrmDaoManager.register(Widget.class, widgetDao));
+
+    Assert.assertSame(scope.<ORMDao, RuntimeException>call(() -> OrmDaoScopeManager.get(Widget.class)), widgetDao);
+    Assert.assertSame(OrmDaoContextManager.get(Widget.class), widgetDao);
+    Assert.assertSame(OrmDaoManager.get(Widget.class), widgetDao, "visible from a thread carrying only the context");
+    Assert.assertSame(scope.<ORMDao, RuntimeException>call(() -> OrmDaoManager.get(Widget.class)), widgetDao, "visible from a thread carrying the scope");
   }
 
   @SuppressWarnings("unchecked")
-  public void testFindDurableClassMatchesByFullyQualifiedName () {
+  public void testRegisterWithOnlyContextBoundWritesOnlyTheContext () {
 
-    OrmDaoManager.register(Widget.class, Mockito.mock(ORMDao.class));
-
-    Assert.assertEquals(OrmDaoManager.findDurableClass(Widget.class.getName()), Widget.class);
-  }
-
-  @SuppressWarnings("unchecked")
-  public void testFindDurableClassReturnsNullWhenNoNameMatches () {
-
-    OrmDaoManager.register(Widget.class, Mockito.mock(ORMDao.class));
-
-    Assert.assertNull(OrmDaoManager.findDurableClass("Gadget"));
-    Assert.assertNull(OrmDaoManager.findDurableClass("org.smallmind.persistence.orm.OrmDaoManagerTest$Gadget"));
-  }
-
-  @SuppressWarnings("unchecked")
-  public void testFindDurableClassDistinguishesAmongMultipleRegistrations () {
-
-    OrmDaoManager.register(Widget.class, Mockito.mock(ORMDao.class));
-    OrmDaoManager.register(Gadget.class, Mockito.mock(ORMDao.class));
-
-    Assert.assertEquals(OrmDaoManager.findDurableClass("Widget"), Widget.class);
-    Assert.assertEquals(OrmDaoManager.findDurableClass("Gadget"), Gadget.class);
-  }
-
-  @SuppressWarnings("unchecked")
-  public void testGetByNameResolvesRegisteredDao () {
-
+    PerApplicationScope scope = new PerApplicationScope();
     ORMDao<Long, Widget, ?, ?> widgetDao = Mockito.mock(ORMDao.class);
 
     OrmDaoManager.register(Widget.class, widgetDao);
 
-    Assert.assertSame(OrmDaoManager.get("Widget"), widgetDao);
-    Assert.assertSame(OrmDaoManager.get(Widget.class.getName()), widgetDao);
+    Assert.assertSame(OrmDaoContextManager.get(Widget.class), widgetDao);
+    Assert.assertNull(scope.<ORMDao, RuntimeException>call(() -> OrmDaoScopeManager.get(Widget.class)));
   }
 
   @SuppressWarnings("unchecked")
-  public void testGetByNameReturnsNullWhenAbsent () {
+  public void testLookupFallsBackToTheContextWhenTheScopeHoldsNothing () {
 
-    OrmDaoManager.register(Widget.class, Mockito.mock(ORMDao.class));
-
-    Assert.assertNull(OrmDaoManager.get("Gadget"));
-  }
-
-  @SuppressWarnings("unchecked")
-  public void testGetByClassResolvesRegisteredDao () {
-
+    PerApplicationScope scope = new PerApplicationScope();
     ORMDao<Long, Widget, ?, ?> widgetDao = Mockito.mock(ORMDao.class);
 
-    OrmDaoManager.register(Widget.class, widgetDao);
+    OrmDaoContextManager.register(Widget.class, widgetDao);
 
-    Assert.assertSame(OrmDaoManager.get(Widget.class), widgetDao);
+    Assert.assertSame(scope.<ORMDao, RuntimeException>call(() -> OrmDaoManager.get(Widget.class)), widgetDao);
+    Assert.assertSame(scope.call(() -> OrmDaoManager.get("Widget")), widgetDao);
+    Assert.assertEquals(scope.call(() -> OrmDaoManager.findDurableClass("Widget")), Widget.class);
   }
 
   @SuppressWarnings("unchecked")
-  public void testGetByClassReturnsNullWhenAbsent () {
+  public void testLookupPrefersTheScopeWhenBothHoldAValue () {
 
-    OrmDaoManager.register(Widget.class, Mockito.mock(ORMDao.class));
+    PerApplicationScope scope = new PerApplicationScope();
+    ORMDao<Long, Widget, ?, ?> scopedDao = Mockito.mock(ORMDao.class);
+    ORMDao<Long, Widget, ?, ?> contextDao = Mockito.mock(ORMDao.class);
 
-    Assert.assertNull(OrmDaoManager.get(Gadget.class));
+    scope.run(() -> OrmDaoScopeManager.register(Widget.class, scopedDao));
+    OrmDaoContextManager.register(Widget.class, contextDao);
+
+    Assert.assertSame(scope.<ORMDao, RuntimeException>call(() -> OrmDaoManager.get(Widget.class)), scopedDao);
+    Assert.assertSame(OrmDaoManager.get(Widget.class), contextDao);
+  }
+
+  @SuppressWarnings("unchecked")
+  public void testScopeOnlyThreadResolvesWithoutAContext ()
+    throws Exception {
+
+    PerApplicationScope scope = new PerApplicationScope();
+    ORMDao<Long, Widget, ?, ?> widgetDao = Mockito.mock(ORMDao.class);
+
+    Assert.assertSame(onIsolatedThread(() -> scope.<ORMDao, RuntimeException>call(() -> {
+      OrmDaoManager.register(Widget.class, widgetDao);
+
+      return OrmDaoManager.get(Widget.class);
+    })), widgetDao);
+    Assert.assertNull(onIsolatedThread(() -> scope.<ORMDao, RuntimeException>call(() -> OrmDaoManager.get(Gadget.class))), "an unregistered class on a scope-only thread is null, not an exception");
+  }
+
+  @Test(expectedExceptions = MissingPerApplicationContextException.class)
+  public void testUnboundThreadFailsThroughTheContextFlavor ()
+    throws Exception {
+
+    onIsolatedThread(() -> OrmDaoManager.get("Widget"));
   }
 
   public static class Widget extends AbstractDurable<Long, Widget> {

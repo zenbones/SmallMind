@@ -3,20 +3,30 @@
        xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-  <bean id="mockMessageRouter" class="org.smallmind.phalanx.wire.transport.mock.MockMessageRouter"/>
+  <!--
+    A null perApplicationScope adopts the scope bound on the thread refreshing this context: under the Tanuki
+    wrapper (SpringContextWrapperListener) or PerApplicationScopeContextLoaderListener, the application's scope,
+    so the transport threads are bound to the same scope the refresh ran in. With no scope bound on that thread
+    the transport threads run with no scope. To hand in a specific instance instead, replace <null/> with a ref,
+    for example to the org.smallmind.spark.perApplicationScope singleton the wrapper registers; a ref to any
+    instance other than the bound one fails the refresh with ScopeException.
+  -->
+  <bean id="mockMessageRouter" class="org.smallmind.phalanx.wire.transport.mock.MockMessageRouter" destroy-method="close">
+    <constructor-arg index="0" name="perApplicationScope"><null/></constructor-arg>
+  </bean>
 
   <bean id="jsonSignalCodec" class="org.smallmind.phalanx.wire.signal.JsonSignalCodec">
     <property name="verbose" value="true"/>
     <property name="verboseLogLevel" value="DEBUG"/>
   </bean>
 
-  <bean id="mockRequestTransport" class="org.smallmind.phalanx.wire.transport.mock.MockRequestTransport">
+  <bean id="mockRequestTransport" class="org.smallmind.phalanx.wire.transport.mock.MockRequestTransport" destroy-method="close">
     <constructor-arg index="0" name="messageRouter" ref="mockMessageRouter"/>
     <constructor-arg index="1" name="signalCodec" ref="jsonSignalCodec"/>
     <constructor-arg index="2" name="defaultTimeoutSeconds" value="${wire.default_timeout_seconds}"/>
   </bean>
 
-  <bean id="mockResponseTransport" class="org.smallmind.phalanx.wire.transport.mock.MockResponseTransport">
+  <bean id="mockResponseTransport" class="org.smallmind.phalanx.wire.transport.mock.MockResponseTransport" destroy-method="close">
     <constructor-arg index="0" name="messageRouter" ref="mockMessageRouter"/>
     <constructor-arg index="1" name="signalCodec" ref="jsonSignalCodec"/>
   </bean>

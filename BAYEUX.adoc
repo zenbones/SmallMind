@@ -353,8 +353,10 @@ All three artifacts are published under `org.smallmind`.
 
 * A Jakarta Servlet 6-compatible container (Jetty, Grizzly, Tomcat 10+).
   The repository's test context uses `smallmind-web-grizzly`.
-* Java 21 or later. The default executor is
-  `Executors.newVirtualThreadPerTaskExecutor()`.
+* Java 25 or later. The default executor is
+  `Executors.newThreadPerTaskExecutor(...)` over a virtual-thread factory,
+  wrapped with the resolved scope's `boundThreadFactory(...)` when the
+  server has one (see <<executor-and-scope,Executor And Scope>>).
 * For WebSocket support: a JSR-356-compliant
   `jakarta.websocket.server.ServerContainer` (Tyrus, Jetty's WebSocket
   bridge, or the Grizzly WebSocket runtime).
@@ -416,6 +418,7 @@ servlet context listener publish the server into the container.
             </bean>
           </list>
         </property>
+        <property name="perApplicationScope" ref="org.smallmind.spark.perApplicationScope"/>    <7>
       </bean>
     </constructor-arg>
   </bean>
@@ -457,14 +460,49 @@ servlet context listener publish the server into the container.
     packets the extension will retain per session.
 <5> The `ServletContextListener` publishes the server onto the
     servlet context under the well-known key
-    `org.smallmind.bayeux.oumuamua.server` and calls `start`
-    with the active `ServletConfig`. The servlet and the WebSocket
-    endpoint both pull the server back out by that attribute.
+    `org.smallmind.bayeux.oumuamua.server` and stops it when the
+    context is destroyed. The servlet and the WebSocket endpoint both
+    pull the server back out by that attribute key; the servlet's
+    `init` calls `start` with its `ServletConfig`.
 <6> The servlet installer mounts `OumuamuaServlet` at
     `/cometd/*`. The URL pattern must match whatever the
     `WebsocketConfiguration.oumuamuaUrl` declares, so that clients
     addressing `/smallmind/cometd` reach either transport depending on the
     connection type they initiated.
+<7> The scope the server binds on the threads it starts and around its
+    protocol-listener callbacks. The configuration only stores it; the
+    `OumuamuaServer` constructor resolves it once, on the constructing
+    thread (here the thread running the Spring refresh), through
+    `PerApplicationScope.resolve`: the instance given is used when that
+    thread has no scope bound or has this same instance bound, while a
+    different bound scope fails construction with `ScopeException` (see
+    <<executor-and-scope,Executor And Scope>>). Under the Tanuki wrapper
+    with its scope on (`spark.per.application.scope=true` in
+    `wrapper.conf`, or `perApplicationScope` on the plugin) this bean is
+    registered by `SpringContextWrapperListener` during the refresh, which
+    runs inside that same scope (see
+    xref:SPARK.adoc#the-per-application-scope[The Per-Application Scope]);
+    with the scope off no bean exists under that name and this `ref` fails
+    the refresh with a `BeanCreationException` caused by
+    `NoSuchBeanDefinitionException`, so leave the property unset. Any
+    other host registers a singleton under that
+    name before refreshing, or omits the property. An omitted property
+    adopts the scope bound on the constructing thread — under the wrapper
+    with its scope on, the same instance this `ref` names — and, with none
+    bound either (the wrapper with its scope off among them), leaves the
+    server without a scope: its threads then carry only the
+    `PerApplicationContext` they inherit — the default executor's
+    threads from each submitting thread, the idle timers from the thread
+    that called `start`. A `KafkaBackbone` (see
+    <<clustering-with-kafka,Clustering With Kafka>>) resolves its own
+    constructor argument the same way and must end up with this same
+    instance. A backbone resolved to a different one — possible only on a
+    constructing thread with no scope bound, when the two are handed
+    different instances or only the backbone is handed one — delivers
+    Kafka-received packets to the listeners inside the backbone's scope,
+    which holds none of the refresh's registrations: without a context on
+    its worker threads, DAO lookups return null, session lookups throw
+    `ORMInitializationException`, and metrics are unplugged.
 
 A browser client using CometD's JavaScript library then connects with:
 
@@ -742,9 +780,9 @@ channel.publish(payload);
 
 | `OumuamuaServletContextListener<V>`
 | `ServletContextListener` that publishes the server under
-  `Server.ATTRIBUTE` at `contextInitialized`, calls
-  `server.start(...)`, and invokes `server.stop()` at
-  `contextDestroyed`.
+  `Server.ATTRIBUTE` at `contextInitialized` and invokes
+  `server.stop()` at `contextDestroyed`; `server.start(...)` is
+  called by the servlet's `init`.
 
 | `longpolling.ServletProtocol<V>` /
   `longpolling.LongPollingTransport<V>` /
@@ -1207,6 +1245,7 @@ implementation speaks Kafka.
     <constructor-arg name="groupProtocol"             value="CLASSIC"/>     <4>
     <constructor-arg name="dynamicConsumers"          value="true"/>        <5>
     <constructor-arg name="topicName"                 value="oumuamua"/>    <6>
+    <constructor-arg name="perApplicationScope"       ref="org.smallmind.spark.perApplicationScope"/> <8>
     <constructor-arg name="servers">                                         <7>
       <bean class="org.smallmind.kafka.utility.KafkaServerFactoryBean">
         <property name="serverPattern" value="kafka-1:9094,kafka-2:9094"/>
@@ -1223,8 +1262,11 @@ implementation speaks Kafka.
     then be stable across restarts of the same node.
 <2> The number of background consumer workers polling Kafka on this
     node. One is enough unless inbound volume is very high.
-<3> How long `startUp` will wait for the broker to become reachable
-    before giving up.
+<3> How long the constructor will wait for the broker to become
+    reachable before giving up; `shutDown` also waits up to this long
+    for queued send tasks to hand their records to the producer, and
+    then up to this long again for the producer to flush buffered
+    records to the broker before abandoning them.
 <4> The Kafka group protocol for the backbone's consumers. Use
     `CLASSIC` for brokers that do not support KIP-848; use `CONSUMER`
     for Kafka 3.7 and later with the new consumer protocol enabled.
@@ -1241,12 +1283,48 @@ implementation speaks Kafka.
 <7> Bootstrap servers. `KafkaServerFactoryBean` resolves
     comma-separated host:port patterns into the producer/consumer
     `bootstrap.servers` property.
+<8> Required argument with no scope-less overload; it precedes the
+    `servers` varargs, so wire it by `name` as shown. The constructor
+    resolves it once, on the constructing thread, through
+    `PerApplicationScope.resolve`: the instance given is used when that
+    thread has no scope bound or has this same instance
+    bound; a different bound scope fails construction with
+    `ScopeException` before any broker connection is attempted; `<null/>`
+    adopts whatever scope is bound on the constructing thread. The
+    consumer workers inherit no `ScopedValue` binding; when resolution
+    leaves the backbone with a scope they run their whole poll loop — and
+    so every packet they deliver to the local server — inside it. The
+    backbone must end up with the same instance as the server
+    configuration's `perApplicationScope`: under the Tanuki wrapper with
+    its scope on (`spark.per.application.scope`) that is the
+    `org.smallmind.spark.perApplicationScope` singleton (see
+    xref:SPARK.adoc#the-per-application-scope[The Per-Application Scope]),
+    which `<null/>` also adopts because the refresh runs inside it; with
+    the wrapper's scope off no bean exists under that name — this `ref`
+    fails the refresh with a `BeanCreationException` caused by
+    `NoSuchBeanDefinitionException` — so pass `<null/>`, which then
+    resolves to no scope; any other host
+    registers a singleton under that name before the refresh, or passes
+    `<null/>`. With no scope given and none bound, the workers carry only
+    the `PerApplicationContext` they inherit from the thread running
+    `OumuamuaServer.start` (the servlet's `init`), which creates them in
+    `startUp`. The producer's executor only calls `producer.send` and is
+    never wrapped.
+
+.Omitting the scope through the same argument
+[source,xml]
+----
+<constructor-arg name="perApplicationScope"><null/></constructor-arg>
+----
 
 How it works, concretely:
 
-* On `startUp`, the backbone creates one Kafka producer and one
-  Kafka consumer per worker (using a snowflake-generated consumer
-  group per node, so every node independently sees every record).
+* The constructor checks broker connectivity and creates the one Kafka
+  producer. `startUp` starts the consumer workers, each on a non-daemon
+  platform thread with a Kafka consumer of its own (using a
+  snowflake-generated consumer group per node, so every node
+  independently sees every record); the JVM stays alive until
+  `shutDown`.
 * `publish(Packet)` serializes the packet through
   `DebonedPacket` / `RecordUtility` and writes it as a
   record to the topic.
@@ -1255,8 +1333,24 @@ How it works, concretely:
   are skipped to prevent loopback. Non-matches are deserialized and
   handed to `Server.deliver(sender=null, packet, local=false)`
   so that the fan-out happens without re-publishing to the backbone.
-* `shutDown` gracefully wakes every consumer via
-  `KafkaConsumer.wakeup()` and closes the producer.
+* `shutDown` signals every consumer worker and wakes it via
+  `KafkaConsumer.wakeup()`, then waits for each to exit, shuts down the
+  send executor and waits up to
+  `startupGracePeriodSeconds` for queued send tasks to hand their
+  records to the producer (logging a WARN if they do not), then closes
+  the producer with the same bound on flushing buffered records to the
+  broker. Once `shutDown` has taken the stopping transition, the executor
+  and producer are released even when a step throws or the thread is
+  interrupted, and the backbone reaches `STOPPED` regardless; `shutDown`
+  on a backbone that was never started releases them too. A `shutDown`
+  that is still waiting for a concurrent transition releases nothing if
+  it is interrupted there, or if the concurrent call was a `startUp`
+  that completed (it then throws `ComponentStateException` and the
+  backbone stays `STARTED`). The backbone is terminal afterwards: a later
+  `publish` is dropped with a WARN rather than thrown, and a later
+  `startUp` throws `ComponentStateException`. A send that fails
+  — whether the producer throws or reports the failure through its
+  callback — is logged at ERROR.
 
 [IMPORTANT]
 ====
@@ -1453,6 +1547,72 @@ a per-channel `ChannelInitializer`.
   there is no practical ceiling on the number of in-flight delivery
   operations — the constraint is whatever the transport itself imposes.
 
+[[executor-and-scope]]
+=== Executor And Scope
+
+The executor runs `onMessages` for long-polling requests and the
+`process` pass for WebSocket frames — the packet listeners, services,
+and `SecurityPolicy` calls those make. With no `executorService`
+configured the server builds a virtual-thread-per-task executor and,
+when it holds a scope, binds that scope on every task. A supplied
+executor is used as given, and its threads bind nothing:
+
+* With a scope and no `PerApplicationContext` on its threads, DAO and
+  session lookups made from a supplied executor throw
+  `MissingPerApplicationContextException` and `Instrument` metrics
+  silently no-op.
+* With a context (the Tanuki wrapper, or any context-only host), a
+  supplied executor whose threads were created from a thread carrying
+  the context map resolves through it.
+
+The server's scope is fixed once, in the `OumuamuaServer` constructor,
+on the constructing thread. `OumuamuaConfiguration.setPerApplicationScope`
+only stores the value; the constructor passes it through
+`PerApplicationScope.resolve`, keeps the result, exposes it through
+`getPerApplicationScope()` (which `AsyncOumuamuaServlet` reads to build
+its executor), and applies it through `runBound`, which both servlets
+and the WebSocket endpoint use around their protocol callbacks.
+Resolution follows the `ScopedValue` binding of the constructing thread
+at that moment:
+
+* A scope given with no scope bound on the constructing thread, or with
+  that same instance bound, is used as given.
+* A scope given while a different scope is bound fails the constructor
+  with `ScopeException`.
+* No scope given (`null`, the default) adopts the scope bound on the
+  constructing thread; with none bound either, the server has no scope,
+  and its default executor, the idle-channel and idle-session timers,
+  and the `runBound` callbacks run unbound, carrying only the
+  `PerApplicationContext` they inherit.
+
+Only the binding on the constructing thread counts; a scope bound later,
+or on another thread, is not adopted.
+
+`AsyncOumuamuaServlet` never uses the configured executor: it builds its
+own virtual-thread-per-task executor in `init`, bound to the server's
+scope when it holds one. `OumuamuaServlet` and the WebSocket endpoint
+submit to `server.getExecutorService()`, so a supplied executor affects
+only those two entry points.
+
+To supply an executor that runs inside the scope, bind it from the scope
+instance. The static `PerApplicationScope.wrapThreadFactory` captures the
+binding of the thread that calls it and throws
+`MissingPerApplicationScopeException` when there is none, which is the
+case on a Spring refresh outside the wrapper or under the wrapper with
+its scope off; the instance methods `boundThreadFactory` and
+`boundExecutor` need no binding on the calling thread.
+
+[source,java]
+----
+PerApplicationScope perApplicationScope = ...;                              <1>
+
+configuration.setPerApplicationScope(perApplicationScope);
+configuration.setExecutorService(Executors.newThreadPerTaskExecutor(
+  perApplicationScope.boundThreadFactory(Thread.ofVirtual().factory())));   <2>
+----
+<1> The same instance the configuration, and any `KafkaBackbone`, receive.
+<2> Every task the executor runs is bound to that scope.
+
 == Error Model
 
 Errors fall into three broad categories.
@@ -1484,9 +1644,18 @@ Security rejections::
 
 Backbone errors::
     `KafkaBackbone` logs and swallows transient poll exceptions
-    and reconstructs its consumer. A `startUp` that cannot reach
-    the broker within `startupGracePeriodSeconds` throws a
-    `KafkaConnectionException` and aborts server startup.
+    and reconstructs its consumer. A backbone whose constructor cannot
+    reach the broker within `startupGracePeriodSeconds` throws a
+    `KafkaConnectionException`, which aborts the Spring refresh that
+    builds it (not `OumuamuaServer.start`).
+
+Scope errors::
+    `ScopeException` is thrown by the `OumuamuaServer` constructor when
+    the configuration carries a `PerApplicationScope` and a different
+    scope is bound on the constructing thread, and by the `KafkaBackbone`
+    constructor under the same condition for its own argument. In a
+    Spring assembly either aborts the refresh. See
+    <<executor-and-scope,Executor And Scope>>.
 
 [[defaults-reference]]
 == Defaults Reference
@@ -1536,8 +1705,12 @@ Backbone errors::
 | `OumuamuaConfiguration`
 
 | `executorService`
-| `Executors.newVirtualThreadPerTaskExecutor()`
+| A virtual-thread-per-task executor whose threads run inside the server's resolved scope when it holds one. A supplied executor is used as given — its threads are the application's to bind.
 | `OumuamuaServer` constructor
+
+| `perApplicationScope`
+| `null` — resolved once in the `OumuamuaServer` constructor, where `null` adopts the scope bound on the constructing thread; with none bound either, the server's default executor, its idle-channel and idle-session timers, the servlets' protocol-listener callbacks, and the WebSocket endpoint's delivery notification run with no scope, carrying only whatever `PerApplicationContext` is inherited: the default executor's threads from each submitting thread, the timers from the thread that called `start` (the servlet's `init`)
+| `OumuamuaConfiguration`
 
 | `securityPolicy`
 | none — a `null` policy is treated as allow-all

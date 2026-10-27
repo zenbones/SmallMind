@@ -42,6 +42,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
@@ -64,6 +65,8 @@ import org.smallmind.bayeux.oumuamua.server.api.json.Value;
 import org.smallmind.bayeux.oumuamua.server.spi.AbstractAttributed;
 import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.scope.ScopeException;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
@@ -71,12 +74,21 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 /**
  * Central Bayeux server that owns the channel tree, session registry, protocol map, and backbone,
  * and routes messages between all of those components.
+ * <p>
+ * None of the threads the server starts inherits a {@code ScopedValue} binding. The server resolves its
+ * {@link PerApplicationScope} once, in the constructor, through {@link PerApplicationScope#resolve}: the scope the
+ * configuration carries is used, and a configuration carrying none adopts whichever scope is bound on the
+ * constructing thread. When that leaves the server with a scope, it runs the executor it creates by default and its
+ * idle-channel and idle-session timers inside that scope, and exposes it through {@link #getPerApplicationScope()}
+ * so the servlets and WebSocket endpoint can bind their own container callbacks the same way. A caller-supplied
+ * executor is used as given.
  *
  * @param <V> the concrete {@link Value} type used throughout message processing
  */
 public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed implements Server<V> {
 
   private final ExecutorService executorService;
+  private final PerApplicationScope perApplicationScope;
   private final ConcurrentHashMap<String, OumuamuaSession<V>> sessionMap = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, Protocol<V>> protocolMap = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<Route, BayeuxService<V>> serviceMap = new ConcurrentHashMap<>();
@@ -97,6 +109,8 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
    *                      contain at least one protocol and a non-{@code null} codec
    * @throws OumuamuaException if {@code configuration} is {@code null}, its codec is missing, or
    *                           no protocols have been defined
+   * @throws ScopeException    if the configuration carries a scope and a different scope is bound on the
+   *                           constructing thread
    */
   public OumuamuaServer (OumuamuaConfiguration<V> configuration)
     throws OumuamuaException {
@@ -111,7 +125,9 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
 
       this.configuration = configuration;
 
-      executorService = ((configuredExecutorService = configuration.getExecutorService()) != null) ? configuredExecutorService : Executors.newVirtualThreadPerTaskExecutor();
+      perApplicationScope = PerApplicationScope.resolve(configuration.getPerApplicationScope());
+      //  A supplied executor is the application's to wrap; only the default one is built here, so only it is bound.
+      executorService = ((configuredExecutorService = configuration.getExecutorService()) != null) ? configuredExecutorService : Executors.newThreadPerTaskExecutor(boundThreadFactory(Thread.ofVirtual().factory()));
 
       allowsImplicitConnection = configuration.isAllowsImplicitConnection();
       sessionConnectionIntervalMilliseconds = configuration.getSessionConnectIntervalSeconds() * 1000L;
@@ -170,24 +186,24 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
       protocolMap.put(protocol.getName(), protocol);
     }
 
-    idleChannelExecutor = Executors.newSingleThreadScheduledExecutor((runnable) -> {
+    idleChannelExecutor = Executors.newSingleThreadScheduledExecutor(boundThreadFactory((runnable) -> {
 
       Thread thread = new Thread(runnable, "oumuamua-idle-channel");
 
       thread.setDaemon(true);
 
       return thread;
-    });
+    }));
     idleChannelExecutor.scheduleWithFixedDelay(new IdleChannelSifter<>(configuration.getIdleCleanupLogLevel(), channelTree, this::onRemoved), configuration.getIdleChannelCycleMinutes(), configuration.getIdleChannelCycleMinutes(), TimeUnit.MINUTES);
 
-    idleSessionExecutor = Executors.newSingleThreadScheduledExecutor((runnable) -> {
+    idleSessionExecutor = Executors.newSingleThreadScheduledExecutor(boundThreadFactory((runnable) -> {
 
       Thread thread = new Thread(runnable, "oumuamua-idle-session");
 
       thread.setDaemon(true);
 
       return thread;
-    });
+    }));
     idleSessionExecutor.scheduleWithFixedDelay(new IdleSessionInspector<>(this, configuration.getIdleCleanupLogLevel()), configuration.getIdleSessionCycleMinutes(), configuration.getIdleSessionCycleMinutes(), TimeUnit.MINUTES);
 
     LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server started...");
@@ -242,6 +258,38 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   public ExecutorService getExecutorService () {
 
     return executorService;
+  }
+
+  /**
+   * Returns the scope the server binds on the threads it starts, or {@code null} when it binds none. This is the
+   * scope resolved in the constructor, whether it came from the configuration or was adopted from the constructing
+   * thread. Servlets and endpoints hosted by the container use it to bind the callbacks the container delivers on
+   * its own threads.
+   *
+   * @return the resolved per-application scope, or {@code null}
+   */
+  public PerApplicationScope getPerApplicationScope () {
+
+    return perApplicationScope;
+  }
+
+  /**
+   * Runs {@code runnable} inside the resolved scope, or directly when the server binds none.
+   *
+   * @param runnable the work to run
+   */
+  public void runBound (Runnable runnable) {
+
+    if (perApplicationScope == null) {
+      runnable.run();
+    } else {
+      perApplicationScope.run(runnable);
+    }
+  }
+
+  private ThreadFactory boundThreadFactory (ThreadFactory threadFactory) {
+
+    return (perApplicationScope == null) ? threadFactory : perApplicationScope.boundThreadFactory(threadFactory);
   }
 
   /**

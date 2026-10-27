@@ -72,13 +72,13 @@ public class RabbitMQConfirmationIntegrationTest extends RabbitMQTransportIntegr
   protected ResponseTransport createResponseTransport ()
     throws Exception {
 
-    return new RabbitMQResponseTransport(connector, new NameConfiguration(), InvocationWorker.class, signalCodec, "default", 1, 1, 60, 3, false, CONFIRMATION_HANDLER);
+    return new RabbitMQResponseTransport(connector, new NameConfiguration(), InvocationWorker.class, signalCodec, "default", 1, 1, 60, 3, false, CONFIRMATION_HANDLER, null);
   }
 
   @Override
   protected RequestTransport createRequestTransport ()
     throws Exception {
 
-    return new RabbitMQRequestTransport(connector, new NameConfiguration(), signalCodec, 1, 1, 30L, 60, false, CONFIRMATION_HANDLER);
+    return new RabbitMQRequestTransport(connector, new NameConfiguration(), signalCodec, 1, 1, 30L, 60, false, CONFIRMATION_HANDLER, null);
   }
 }

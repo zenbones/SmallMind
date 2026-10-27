@@ -167,6 +167,13 @@ wrapper.startup.timeout=${startupTimeoutSeconds}
 spark.startup.ceiling=${startupCeilingSeconds}
 [/#if]
 
+# Whether the SmallMind wrapper listener creates a PerApplicationScope and
+#  runs startup, shutdown, and control events inside it. Absent or false
+#  leaves the application with its PerApplicationContext alone.
+[#if perApplicationScope?exists]
+spark.per.application.scope=${perApplicationScope}
+[/#if]
+
 #********************************************************************
 # Wrapper JVM Checks
 #********************************************************************

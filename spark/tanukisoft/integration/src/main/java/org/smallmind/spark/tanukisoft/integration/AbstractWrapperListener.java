@@ -37,9 +37,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.nutsnbolts.property.PropertyClosure;
 import org.smallmind.nutsnbolts.property.PropertyExpander;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.util.SystemPropertyMode;
 import org.tanukisoftware.wrapper.WrapperListener;
 import org.tanukisoftware.wrapper.WrapperManager;
@@ -49,6 +50,20 @@ import org.tanukisoftware.wrapper.WrapperManager;
  * {@link #startup(String[])} and {@link #shutdown()} behavior; this class takes care of:
  * <ul>
  *   <li>reflectively instantiating the configured listener from {@code main} and handing it to {@link WrapperManager};</li>
+ *   <li>owning a {@link PerApplicationScope} when {@code spark.per.application.scope} is {@code true} in
+ *       {@code wrapper.conf} (see {@link #isPerApplicationScopeEnabled()}; absent or any other value leaves the
+ *       application without one), available through {@link #getPerApplicationScope()}, and running
+ *       {@link #startup(String[])}, {@link #shutdown()}, and {@link #controlEvent(int)} inside it; because this class
+ *       also extends {@code PerApplicationContext}, those callbacks then run with both bindings and the bridging
+ *       {@code *Manager} registries are written to both maps, and without the scope they run with the context binding
+ *       alone. Threads the application starts inherit the context map
+ *       but not the scope; to carry the scope they must be built from the scope instance's
+ *       {@code boundThreadFactory} or fed through its {@code boundExecutor} (preferred, since neither needs a
+ *       binding on the calling thread), from the static {@code PerApplicationScope.wrapThreadFactory} (which captures
+ *       the caller's binding and so requires a bound caller) or {@code wrapExecutor} (which takes a carrier from
+ *       each submitting thread at {@code execute}), or run their work
+ *       through an {@code ApplicationCarrier} (the keep-alive executor below never resolves per-application data
+ *       and is deliberately left unwrapped);</li>
  *   <li>scheduling a background "keep-alive" task on a single-thread scheduled executor that calls
  *       {@link WrapperManager#signalStarting(int)}, promising the startup timeout ({@code wrapper.startup.timeout}
  *       in {@code wrapper.conf}, converted to the milliseconds the wrapper expects) as soon as
@@ -65,11 +80,15 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
 
   private static final String STARTUP_TIMEOUT_PROPERTY = "wrapper.startup.timeout";
   private static final String STARTUP_CEILING_PROPERTY = "spark.startup.ceiling";
+  private static final String PER_APPLICATION_SCOPE_PROPERTY = "spark.per.application.scope";
   private static final int DEFAULT_STARTUP_TIMEOUT_SECONDS = 30;
   private static final int DEFAULT_STARTUP_CEILING_SECONDS = 180;
   private static final int STACK_TRACE_ERROR_CODE = 2;
   private static final int UNLIMITED_STARTUP_TIMEOUT_SECONDS = 0;
   private static final int MINIMUM_STARTUP_TIMEOUT_SECONDS = 10;
+
+  private PerApplicationScope perApplicationScope;
+  private boolean perApplicationScopeSettled;
 
   /**
    * Entry point invoked by the wrapper. The first argument must name the concrete {@link WrapperListener} subclass
@@ -103,6 +122,21 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
     }
   }
 
+  private static Integer parseStartupCeilingProperty () {
+
+    String ceilingSeconds;
+
+    if ((ceilingSeconds = WrapperManager.getProperties().getProperty(STARTUP_CEILING_PROPERTY)) == null) {
+
+      return null;
+    }
+    try {
+      return Integer.parseInt(ceilingSeconds.trim());
+    } catch (NumberFormatException numberFormatException) {
+      throw new IllegalStateException(String.format("Unable to parse the property(%s) as an integer(%s)", STARTUP_CEILING_PROPERTY, ceilingSeconds));
+    }
+  }
+
   /**
    * Hook for subclasses to perform application startup. Invoked on the wrapper start thread.
    *
@@ -121,12 +155,60 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
     throws Exception;
 
   /**
-   * Receives wrapper control events. When running without the native wrapper, interpret Ctrl-C, Close, and Shutdown
-   * as a request to stop the application; otherwise the native wrapper itself handles these events.
+   * Whether this listener owns a {@link PerApplicationScope}. Taken from the {@code spark.per.application.scope}
+   * property in {@code wrapper.conf}: {@code true} (in any letter case) turns the scope on, and an absent property or
+   * any other value leaves it off, so an application that never asked for a scope runs with its
+   * {@code PerApplicationContext} alone, exactly as it did before the scope existed. Consulted once, the first time
+   * {@link #getPerApplicationScope()} runs; listeners that want a different policy override this, which replaces the
+   * property lookup.
+   *
+   * @return {@code true} to create and bind a scope, {@code false} to run without one
+   */
+  protected boolean isPerApplicationScopeEnabled () {
+
+    return Boolean.parseBoolean(WrapperManager.getProperties().getProperty(PER_APPLICATION_SCOPE_PROPERTY, Boolean.FALSE.toString()).trim());
+  }
+
+  /**
+   * The {@link PerApplicationScope} this listener binds around {@link #startup(String[])}, {@link #shutdown()}, and
+   * {@link #controlEvent(int)}, or {@code null} when {@link #isPerApplicationScopeEnabled()} is {@code false}. The
+   * decision is made on the first call and kept. Subclasses hand the scope to whatever needs the same instance — a
+   * Spring assembly that wires it into a web server's {@code perApplicationScope} property, or a pool built from this
+   * instance's {@code boundThreadFactory} — so that every reader resolves through one map; a {@code null} handed to
+   * those consumers resolves to no scope, since nothing is bound.
+   *
+   * @return the scope owned by this listener, or {@code null} when the scope is off
+   */
+  protected final synchronized PerApplicationScope getPerApplicationScope () {
+
+    if (!perApplicationScopeSettled) {
+      perApplicationScope = isPerApplicationScopeEnabled() ? new PerApplicationScope() : null;
+      perApplicationScopeSettled = true;
+    }
+
+    return perApplicationScope;
+  }
+
+  /**
+   * Receives wrapper control events, with the listener's {@link PerApplicationScope} bound when it has one. When
+   * running without the native wrapper, interpret Ctrl-C, Close, and Shutdown as a request to stop the application;
+   * otherwise the native wrapper itself handles these events.
    *
    * @param event one of the {@code WrapperManager.WRAPPER_CTRL_*} constants
    */
+  @Override
   public void controlEvent (int event) {
+
+    PerApplicationScope perApplicationScope;
+
+    if ((perApplicationScope = getPerApplicationScope()) == null) {
+      handleControlEvent(event);
+    } else {
+      perApplicationScope.run(() -> handleControlEvent(event));
+    }
+  }
+
+  private void handleControlEvent (int event) {
 
     if (!WrapperManager.isControlledByNativeWrapper()) {
       if ((event == WrapperManager.WRAPPER_CTRL_C_EVENT) || (event == WrapperManager.WRAPPER_CTRL_CLOSE_EVENT) || (event == WrapperManager.WRAPPER_CTRL_SHUTDOWN_EVENT)) {
@@ -187,21 +269,6 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
     return ((configuredCeilingSeconds = parseStartupCeilingProperty()) == null) ? DEFAULT_STARTUP_CEILING_SECONDS : configuredCeilingSeconds;
   }
 
-  private static Integer parseStartupCeilingProperty () {
-
-    String ceilingSeconds;
-
-    if ((ceilingSeconds = WrapperManager.getProperties().getProperty(STARTUP_CEILING_PROPERTY)) == null) {
-
-      return null;
-    }
-    try {
-      return Integer.parseInt(ceilingSeconds.trim());
-    } catch (NumberFormatException numberFormatException) {
-      throw new IllegalStateException(String.format("Unable to parse the property(%s) as an integer(%s)", STARTUP_CEILING_PROPERTY, ceilingSeconds));
-    }
-  }
-
   /**
    * Wrapper start callback. Reads the startup timeout via {@link #getStartupTimeoutSeconds()}, opens a single-thread
    * scheduled executor (its worker is a daemon named {@code spark-wrapper-signal}) in a try-with-resources block,
@@ -217,14 +284,24 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
    * stops signalling and cancels its own future, after which the wrapper is free to time out and stop a stalled
    * startup. A startup timeout of {@code 0} means the wrapper has been told to wait indefinitely, so no signaller is
    * scheduled at all. When {@link #startup(String[])} returns or throws, the try-with-resources {@code close()} shuts
-   * the executor down.
+   * the executor down. The whole of {@code start} runs inside this listener's {@link PerApplicationScope} when it has
+   * one; the signaller's thread factory is not wrapped, because the keep-alive task only talks to the wrapper and
+   * never resolves per-application data.
    *
    * @param args the application arguments, forwarded unchanged to {@link #startup(String[])}
    * @return {@code null} on success, or {@code 2} if the startup timeout or fail-safe ceiling is misconfigured or
    * {@link #startup(String[])} threw anything, {@link Error} included; {@code null} signals the wrapper to keep
    * running
    */
+  @Override
   public Integer start (String[] args) {
+
+    PerApplicationScope perApplicationScope;
+
+    return ((perApplicationScope = getPerApplicationScope()) == null) ? runStart(args) : perApplicationScope.call(() -> runStart(args));
+  }
+
+  private Integer runStart (String[] args) {
 
     try (ScheduledExecutorService signalExecutor = Executors.newSingleThreadScheduledExecutor((runnable) -> {
 
@@ -275,13 +352,21 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
   }
 
   /**
-   * Wrapper stop callback. Invokes {@link #shutdown()} and converts any {@link Throwable} thrown during shutdown
-   * into a distinguishable exit code.
+   * Wrapper stop callback. Invokes {@link #shutdown()} inside this listener's {@link PerApplicationScope}, when it
+   * has one, and converts any {@link Throwable} thrown during shutdown into a distinguishable exit code.
    *
    * @param exitCode the exit code the wrapper wants to use
    * @return {@code exitCode} if shutdown succeeded; {@code 2} if shutdown threw
    */
+  @Override
   public int stop (int exitCode) {
+
+    PerApplicationScope perApplicationScope;
+
+    return ((perApplicationScope = getPerApplicationScope()) == null) ? runStop(exitCode) : perApplicationScope.call(() -> runStop(exitCode));
+  }
+
+  private int runStop (int exitCode) {
 
     try {
       shutdown();

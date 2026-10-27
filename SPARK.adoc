@@ -895,7 +895,7 @@ Bundled dependencies sometimes ship these packages (older SAX stubs,
 stale JAXB API jars, or test fixtures that repackage XML APIs). The
 JDK requires its *own* copies of these classes for platform code to
 function; allowing the bundle to provide conflicting versions causes
-`LinkageError`s when the JDK's own parser code hits them. The allow
+`LinkageError` failures when the JDK's own parser code hits them. The allow
 list for `jakarta.xml.bind` exists because production code that wants
 JAXB needs a real implementation, and a Singularity bundle is the
 correct place to ship one.
@@ -1106,6 +1106,14 @@ The full set of parameters, in the order a user typically cares about:
     ceiling. Omit for the listener's default of 180. See
     <<startup-timeout-and-keep-alive>>.
 
+`perApplicationScope`::
+    Boolean rendered as `spark.per.application.scope` in `wrapper.conf`:
+    whether the listener creates a `PerApplicationScope` and runs
+    `startup`, `shutdown`, and control events inside it. Only `true`
+    turns the scope on. Omit to leave the scope off, which is the
+    listener's default. See
+    <<the-per-application-scope,The Per-Application Scope>>.
+
 `appParameters`::
     Ordered list of arguments passed to the wrapper listener's
     `main`. The plugin *prepends* `wrapperListener` to this list
@@ -1209,6 +1217,17 @@ stderr, stops signalling and cancels its own future; when `startup`
 returns or throws the try-with-resources `close()` shuts the
 executor down.
 +
+Owns a `PerApplicationScope` only when `spark.per.application.scope` in
+`wrapper.conf` is `true` (`perApplicationScope` on the Maven plugin).
+The property is read through the protected
+`isPerApplicationScopeEnabled()`, which subclasses may override, and the
+decision is settled on the first `getPerApplicationScope()` call and
+kept. With the scope on, `start`, `stop`, and `controlEvent` run their
+whole body inside it; with it off they run with the inherited
+`PerApplicationContext` binding alone and `getPerApplicationScope()`
+returns `null`. See
+<<the-per-application-scope,The Per-Application Scope>>.
++
 Converts anything thrown by `startup` or `shutdown`, an `Error`
 included, into exit code `2` (`STACK_TRACE_ERROR_CODE`), and returns
 the same code when `wrapper.startup.timeout` or `spark.startup.ceiling`
@@ -1223,20 +1242,29 @@ native wrapper is in charge, it delivers these events itself.
     `startup(String[])` / `shutdown()` onto the context:
 +
 * `startup` creates the context on first call by invoking
-  `loadApplicationContext(args)`, then refreshes it if it is not
-  already active.
+  `loadApplicationContext(args)`; when the listener has a scope and
+  that newly loaded context is not yet active, it adds a
+  `BeanFactoryPostProcessor` that registers the scope as the singleton
+  bean `org.smallmind.spark.perApplicationScope` during the refresh. The
+  post-processor is added only when the context is first loaded, not on
+  every `startup` that finds the context inactive; each such `startup`
+  then refreshes it, inside the scope when there is one. With the scope
+  off, no scope bean is registered and the context is loaded and
+  refreshed with only the `PerApplicationContext` binding.
 * `shutdown` closes the context if one was created and is still
-  active.
+  active, inside the listener's scope when it has one.
 +
 Subclasses implement exactly one method:
 `loadApplicationContext(String[] args)`.
 
 `ClassPathXmlSpringContextWrapperListener`::
     The zero-code listener. Its `loadApplicationContext(String[] args)`
-    returns `new ClassPathXmlApplicationContext(args)`, so every
-    argument passed through the plugin's `appParameters` becomes a
-    classpath-relative Spring XML location. In most deployments this
-    is the only listener you ever reference.
+    returns `new ClassPathXmlApplicationContext(args, false)` — an
+    unrefreshed context, so that `startup` can add the post-processor
+    that registers the scope bean during the refresh when the scope is
+    on — and every argument passed through the plugin's `appParameters`
+    becomes a classpath-relative Spring XML location. In most
+    deployments this is the only listener you ever reference.
 
 === Plugin-Support Classes (`spark-tanukisoft-maven-plugin`)
 
@@ -1288,10 +1316,10 @@ POM files and shell scripts.
     regardless of `OSStyle`. Its Freemarker model is populated with
     every plugin parameter that shapes wrapper behavior — the
     application name / long name / description, the Java command,
-    each JVM argument, heap sizes, startup timeout and ceiling,
-    umask, run-as user, Upstart / systemd flags, wait-after-startup,
-    appParameters, envArgs, service dependencies, and the classpath
-    element list.
+    each JVM argument, heap sizes, startup timeout and ceiling, the
+    per-application scope flag, umask, run-as user, Upstart / systemd
+    flags, wait-after-startup, appParameters, envArgs, service
+    dependencies, and the classpath element list.
 
 [[maven-packaging-types]]
 == Maven Packaging Types
@@ -1493,11 +1521,12 @@ Tanuki-wrapped distribution:
           <jvmMaxMemoryMB>2048</jvmMaxMemoryMB>
           <startupTimeoutSeconds>60</startupTimeoutSeconds>
           <startupCeilingSeconds>600</startupCeilingSeconds>
+          <perApplicationScope>true</perApplicationScope>              <!--6-->
           <jvmArgs>
             <jvmArg>-server</jvmArg>
             <jvmArg>-XX:+UseG1GC</jvmArg>
           </jvmArgs>
-          <appParameters>                                              <!--6-->
+          <appParameters>                                              <!--7-->
             <appParameter>spring/application-context.xml</appParameter>
           </appParameters>
           <useSystemD>true</useSystemD>
@@ -1518,7 +1547,11 @@ Tanuki-wrapped distribution:
     constant (underscores or hyphens).
 <5> The classpath XML variant — no application-specific listener
     class needed.
-<6> Prepended with the `wrapperListener` class name at render time
+<6> Turns on the listener's `PerApplicationScope`, rendered as
+    `spark.per.application.scope=true` in `wrapper.conf`. Omit it to run
+    with the `PerApplicationContext` binding alone. See
+    <<the-per-application-scope,The Per-Application Scope>>.
+<7> Prepended with the `wrapperListener` class name at render time
     (that is what `AbstractWrapperListener.main` expects), so the
     effective `main` arguments at runtime are:
     `[ClassPathXmlSpringContextWrapperListener, spring/application-context.xml]`.
@@ -1596,8 +1629,16 @@ public class AnnotationConfigWrapperListener extends SpringContextWrapperListene
 <2> Interpret each argument however makes sense for your app. Here
     they are `@Configuration` class names.
 <3> Return an *unrefreshed* context — `SpringContextWrapperListener`
-    calls `refresh()` itself. Returning a pre-refreshed context is
-    harmless (it is detected via `isActive()`) but redundant.
+    calls `refresh()` itself and, when the listener has a scope
+    (`spark.per.application.scope=true`), first adds a
+    `BeanFactoryPostProcessor` that registers the
+    `org.smallmind.spark.perApplicationScope` singleton during the
+    refresh. A context that arrives already refreshed is detected via
+    `isActive()` and left alone, which means the scope bean is never
+    registered in it; with the scope off no scope bean is registered
+    either way. In both cases any definition with a `ref` to it fails
+    the refresh with a `BeanCreationException` caused by
+    `NoSuchBeanDefinitionException`.
 
 Point the plugin at your class:
 
@@ -1823,6 +1864,11 @@ the classes it defines.
 
 `AbstractWrapperListener.start(args)`:
 
+. Binds the listener's own `PerApplicationScope` (see
+  <<the-per-application-scope,The Per-Application Scope>>) for the whole
+  of the call when `spark.per.application.scope` is `true`, so everything
+  below, `startup(args)` included, runs inside it; with the scope off the
+  call runs with the `PerApplicationContext` binding alone.
 . Reads the wrapper's startup timeout in seconds through
   `getStartupTimeoutSeconds()`, which consults
   `WrapperManager.getProperties().getProperty("wrapper.startup.timeout")`
@@ -1834,7 +1880,9 @@ the classes it defines.
   `getStartupTimeoutSeconds()`, which replaces the property lookup.
 . Opens a single-thread `ScheduledExecutorService` whose worker is a
   daemon named `spark-wrapper-signal`, declared in a try-with-resources
-  block so it is shut down the moment `startup` returns or throws.
+  block so it is shut down the moment `startup` returns or throws. Its
+  thread factory is deliberately not wrapped in the scope: the keep-alive
+  task only talks to the wrapper and never resolves per-application data.
 . Unless the timeout is `0` (the wrapper waits indefinitely, so no
   keep-alive is scheduled), schedules the keep-alive task with
   `scheduleWithFixedDelay(..., 0, max(1, startupTimeoutSeconds / 2),
@@ -1844,7 +1892,7 @@ The scheduled keep-alive task, on each firing:
 
 [source,text]
 ----
-ceiling = getFailSafeTimeoutSeconds()        // spark.startup.ceiling, or 180
+ceiling = getStartupCeilingSeconds()         // spark.startup.ceiling, or 180
 if ceiling <= 0 or (nanoTime() - startNanos < ceiling):
   WrapperManager.signalStarting(startupTimeoutSeconds * 1000)   // wait hint in milliseconds
 else:
@@ -1887,7 +1935,181 @@ Tuning hints:
   `startup` returns. An unparsable value is reported as exit code
   `2` from `start`.
   Listeners that want a different policy altogether override
-  `getFailSafeTimeoutSeconds()`, which replaces the property lookup.
+  `getStartupCeilingSeconds()`, which replaces the property lookup.
+
+[[the-per-application-scope]]
+=== The Per-Application Scope
+
+An `AbstractWrapperListener` owns one
+`org.smallmind.nutsnbolts.scope.PerApplicationScope` when
+`spark.per.application.scope` in `wrapper.conf` is `true`
+(`perApplicationScope` on the Maven plugin). Only the value `true`, in
+any letter case and ignoring surrounding whitespace, turns the scope on;
+an absent property or any other value leaves it off, which is the
+default. The property is read through the protected
+`isPerApplicationScopeEnabled()`, which a listener overrides to replace
+the lookup with its own policy, and the decision is settled the first
+time the protected `getPerApplicationScope()` runs and kept for the life
+of the listener: it returns the scope, or `null` when the scope is off.
+
+With the scope on, the three wrapper callbacks — `start` (and so
+`startup`), `stop` (and so `shutdown`), and `controlEvent` — each run
+their whole body inside that scope's `run` / `call`, so per-application
+data registered during `startup` is visible to `shutdown` and to the
+`WrapperManager.stop` call a control event makes. The scope binding ends
+when each callback returns; the context map described next stays
+attached to the thread. With the scope off, the same callbacks run with
+the context binding alone.
+
+The listener extends `PerApplicationContext` whether or not it has a
+scope, so constructing it attaches an `InheritableThreadLocal` map to
+the wrapper's main thread.
+A thread inherits that map from the thread that creates it — the thread
+calling `new Thread`, the thread whose submission makes a pool create a
+worker, or the submitting thread of a thread-per-task executor — so
+threads the application starts from a thread carrying the map carry it
+too. Threads created elsewhere, such as the common `ForkJoinPool` behind
+`CompletableFuture.*Async`, carry nothing. With the scope on, the Spring
+refresh inside `startup` runs with *both* bindings, and every library
+registration made during it — DAOs, sessions, data sources, the Claxon
+registry, the pool, resource proxies — goes through a bridging
+`*Manager` that writes to both maps (see
+xref:NUTSNBOLTS.adoc#pkg-scope[scope — ScopedValue-bound scopes]).
+Consequently:
+
+* A thread handed the scope resolves through the scope map first: a
+  thread from the scope's `boundThreadFactory` or a task on its
+  `boundExecutor` (neither needs a binding on the creating or
+  submitting thread), a thread from the static `wrapThreadFactory` or a
+  task on `wrapExecutor` or an `ApplicationCarrier` (which capture the
+  binding of a thread already inside the scope), or a thread started by
+  a transport, pool, or web server that resolved the listener's scope
+  when it was constructed or started during the refresh (see below).
+* A thread the application starts without the scope, from a thread that
+  carries the context map, carries only that map, which holds the same
+  registrations, so it resolves exactly as every thread does when the
+  scope is off. Applications that never ask for the scope, including
+  those that never heard of `PerApplicationScope`, run with the context
+  binding alone. A thread that inherited nothing fails lookups with
+  `MissingPerApplicationContextException` (metrics lookups return null
+  and the instrumentation is unplugged).
+* Only `WireScope` decoding and direct `PerApplicationScope` /
+  `*ScopeManager` reads require the scope itself; those threads must be
+  given it, which needs the scope to be on.
+
+The property is the one switch: the context binding is always
+established, and the scope is bound only when it is enabled. The
+keep-alive executor described above is the one thread `start` creates
+itself, and it is left without the scope because it never resolves
+per-application data.
+
+`SpringContextWrapperListener` makes the same instance available to the
+Spring assembly: when the listener has a scope and the context returned
+by `loadApplicationContext` has not been refreshed, `startup` adds a
+`BeanFactoryPostProcessor` that registers the scope as the singleton
+bean named `org.smallmind.spark.perApplicationScope`
+(`SpringContextWrapperListener.PER_APPLICATION_SCOPE_BEAN_NAME`) during
+the refresh — after the bean definitions are loaded and after any
+bean-defined `BeanDefinitionRegistryPostProcessor` has run — so a bean
+definition can `ref` it, though a registry post-processor cannot. With
+the scope off nothing is registered under that name, and a `ref` to it
+fails the refresh with a `BeanCreationException` caused by
+`NoSuchBeanDefinitionException`. An
+assembly that must load either way holds the scope through a bean
+declared in the XML itself, with no registration step, as
+`<bean id="perApplicationScope" class="org.smallmind.nutsnbolts.scope.PerApplicationScope" factory-method="getBound"/>`:
+with the scope on, `startup` refreshes inside the listener's scope, so
+`getBound()` returns it; with the scope off, `getBound()` returns
+`null`, which Spring keeps as a null bean, so a `ref` injects `null`
+(see xref:NUTSNBOLTS.adoc#per-application-scope-bean[holding the scope
+as a bean]).
+
+Every library bean that accepts a scope resolves the value it is given
+once, through `PerApplicationScope.resolve`, on the thread that
+constructs it (constructor and factory parameters) or starts it (Spring
+properties, inside `afterPropertiesSet` / `onApplicationEvent` /
+`startup`), and keeps the result for every thread and callback it runs:
+`GrizzlyInitializingBean` / `JettyInitializingBean` (`perApplicationScope`
+property, resolved in `onApplicationEvent`, binding request threads), the
+phalanx transports and `WorkManager` (constructor argument),
+`ComponentPool.setPerApplicationScope` (resolved in `startup()`),
+`PooledDataSourceFactoryBean` and `DynamicPooledDataSourceInitializingBean`
+(`perApplicationScope` property, resolved by the pool they start in
+`afterPropertiesSet`), `PooledDataSourceFactory.createPooledDataSource`
+and `PooledConnectionComponentPoolFactory.constructComponentPool`
+(parameter, resolved by the pool when it starts), `OumuamuaConfiguration`
+(`perApplicationScope`, resolved in the `OumuamuaServer` constructor), and
+`KafkaBackbone` (constructor argument). The parameters are required;
+there is no scope-less overload. Resolution follows one rule:
+
+* A scope handed in is used, and under the wrapper with the scope on it
+  must be the listener's: a `ref` to `org.smallmind.spark.perApplicationScope`
+  resolves to the instance the refresh is bound to. A different instance
+  fails with `org.smallmind.nutsnbolts.scope.ScopeException` at
+  construction or start; a pool that fails this way stays stopped. With
+  the scope off nothing is bound, so a scope handed in is used as given,
+  and a `ref` to `org.smallmind.spark.perApplicationScope` fails the
+  refresh with a `BeanCreationException` caused by
+  `NoSuchBeanDefinitionException`, because the name is not registered.
+* `null` (`<null/>` in XML, as the shipped `mock-wire.xml` /
+  `rabbitmq-wire.xml` pass, or an unset property) adopts the scope bound
+  on the resolving thread. Under the wrapper with the scope on the
+  refresh runs inside the listener's scope, so `null` and the `ref` are
+  two ways to hand in the same scope; with the scope off nothing is
+  bound, so `null` resolves to no scope. A bean resolved on a thread
+  outside the refresh — a lazy-init bean first reached from an
+  application thread, or one started from a background bootstrap —
+  adopts whatever that thread has bound, which is nothing unless the
+  thread is itself inside the scope.
+* With neither a scope handed in nor one bound, which with the scope
+  off is every consumer not handed one, the threads the owner starts run
+  with no scope and carry only the `PerApplicationContext` they inherit
+  — under the wrapper, the context map every thread started from the
+  refresh carries.
+
+A context that arrives already refreshed receives no scope bean, and any
+`ref` to it then fails the refresh; `null` properties in such a context
+still adopt the listener's scope when it has one, because
+`loadApplicationContext` itself runs inside it.
+`ClassPathXmlSpringContextWrapperListener` builds its
+`ClassPathXmlApplicationContext` unrefreshed and leaves the refresh to
+`startup`; a custom `loadApplicationContext` must do the same.
+
+With the scope on, `startup` runs the whole of `loadApplicationContext`
+and the refresh inside the listener's scope: reached through `start`,
+which is how the wrapper calls it, the calling thread is already inside
+the scope, and called directly from a thread that is not, `startup`
+binds the scope itself. `shutdown` closes the context inside the scope
+in the same way, so a `shutdown()` called directly behaves like one
+reached through `stop`. The scope singleton is registered by a
+`BeanFactoryPostProcessor` that `startup` adds once per context instance
+and that registers the singleton on every refresh of that context. A
+`shutdown()` followed by a second `startup()` on the same listener in
+one JVM therefore works only for a context that supports a second
+refresh: `ClassPathXmlApplicationContext`, which
+`ClassPathXmlSpringContextWrapperListener` builds, does;
+`GenericApplicationContext` and `AnnotationConfigApplicationContext` do
+not, and the second refresh fails with `IllegalStateException`. With
+the scope off, `startup` and `shutdown` load, refresh, and close with
+only the context binding, and the same second-refresh rule applies.
+
+[source,xml]
+----
+<bean id="grizzlyServer"
+      class="org.smallmind.web.grizzly.GrizzlyInitializingBean">
+  <property name="perApplicationScope"
+            ref="org.smallmind.spark.perApplicationScope"/>  <!--1-->
+  ...
+</bean>
+----
+<1> Registered during the refresh by the post-processor
+    `SpringContextWrapperListener.startup` adds when the scope is on; not
+    declared in the XML. With the scope off the name is not registered
+    and this `ref` fails the refresh with a `BeanCreationException`
+    caused by `NoSuchBeanDefinitionException`.
+    Leaving the property unset resolves to the same scope under the
+    wrapper with the scope on, and to no scope with it off, as does a
+    `ref` to a bean declared with `factory-method="getBound"`.
 
 === Exit Codes
 
@@ -2078,7 +2300,18 @@ costs a few hundred KB on disk and simplifies `wrapper.conf`.
     to own the URL protocol must be reconciled manually — register
     the Singularity handler into the pre-existing factory.
 
-`WrapperManager` errors ("WrapperStartException", "not initialized"):
+`BeanCreationException` caused by `NoSuchBeanDefinitionException` naming `org.smallmind.spark.perApplicationScope` during the refresh::
+    A bean definition holds a `ref` to the scope singleton that
+    `SpringContextWrapperListener` registers, but the listener has no
+    scope to register: `spark.per.application.scope` is absent from
+    `wrapper.conf` or is not `true` (`perApplicationScope` on the Maven
+    plugin), or the context returned by `loadApplicationContext`
+    arrived already refreshed. Set the property, or declare the scope
+    with `factory-method="getBound"` instead, which injects `null` when
+    the scope is off. See
+    <<the-per-application-scope,The Per-Application Scope>>.
+
+`WrapperManager` errors ("WrapperStartException", "not initialized")::
     `AbstractWrapperListener.main` was invoked outside a wrapper
     process, or the wrapper process was started without
     `wrapper.conf` present. During development, run
@@ -2226,8 +2459,10 @@ Singularity jars are not hermetic::
   `CompressionType` (used by both plugins for archive compression),
   `PropertyExpander` (used by `AbstractWrapperListener.main`),
   `PerApplicationContext` (base class of `AbstractWrapperListener`),
-  and `ClassPathTemplateLoader` (used by `generate-wrapper` for
-  Freemarker).
+  `PerApplicationScope` (owned by `AbstractWrapperListener` when
+  `spark.per.application.scope` is `true`; see
+  <<the-per-application-scope,The Per-Application Scope>>), and
+  `ClassPathTemplateLoader` (used by `generate-wrapper` for Freemarker).
 * xref:PHALANX.adoc[] — for services that also need coordinated
   cluster membership in the wrapped runtime.
 * https://wrapper.tanukisoftware.com/[Tanuki Software Java Service

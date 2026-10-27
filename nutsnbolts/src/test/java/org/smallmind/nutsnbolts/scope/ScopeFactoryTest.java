@@ -36,6 +36,8 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -52,6 +54,27 @@ public class ScopeFactoryTest {
     child.start();
     try {
       child.join();
+    } catch (InterruptedException interruptedException) {
+      throw new IllegalStateException(interruptedException);
+    }
+  }
+
+  private static Thread namedThread (Runnable runnable) {
+
+    Thread thread = new Thread(runnable);
+
+    thread.setName("scope-factory-test-factory");
+    thread.setDaemon(true);
+
+    return thread;
+  }
+
+  private static void join (Thread thread) {
+
+    thread.setDaemon(true);
+    thread.start();
+    try {
+      thread.join();
     } catch (InterruptedException interruptedException) {
       throw new IllegalStateException(interruptedException);
     }
@@ -230,6 +253,36 @@ public class ScopeFactoryTest {
     Assert.assertEquals(ScopeFactory.filterScopesOn(method, Scope.class).length, 0);
   }
 
+  public void testBindingKeysByConcreteClassSoOnlyTheLastInstanceOfAClassSurvives ()
+    throws NoSuchMethodException {
+
+    Method method = ScopeFactoryTest.class.getMethod("unannotatedTarget");
+    TestScope first = new TestScope("first");
+    TestScope last = new TestScope("last");
+
+    Scope[] relayed = ScopeFactory.callInScopes(new Scope[] {first, last}, () -> {
+      Assert.assertSame(ScopeFactory.getScope(TestScope.class), last);
+
+      return ScopeFactory.filterScopesOn(method, Scope.class);
+    });
+
+    Assert.assertEquals(relayed.length, 1);
+    Assert.assertSame(relayed[0], last);
+  }
+
+  public void testFilterScopesOnRelaysOneScopePerConcreteClass ()
+    throws NoSuchMethodException {
+
+    Method method = ScopeFactoryTest.class.getMethod("unannotatedTarget");
+    OtherScope other = new OtherScope();
+    TestScope last = new TestScope("last");
+
+    Scope[] relayed = ScopeFactory.callInScopes(new Scope[] {new TestScope("first"), other, last}, () -> ScopeFactory.filterScopesOn(method, Scope.class));
+
+    Assert.assertEquals(relayed.length, 2);
+    Assert.assertTrue(List.of(relayed).containsAll(List.of(other, last)));
+  }
+
   public void testPlainChildThreadDoesNotInheritBindings () {
 
     AtomicReference<TestScope> seen = new AtomicReference<>(new TestScope("sentinel"));
@@ -271,6 +324,71 @@ public class ScopeFactoryTest {
     Assert.assertNull(ScopeFactory.getScope(TestScope.class));
   }
 
+  public void testWrappedExecutorCarriesScopesBoundAtSubmission () {
+
+    Executor executor = ScopeFactory.wrapExecutor(ScopeFactoryTest::joinChild);
+    AtomicReference<String> seen = new AtomicReference<>();
+
+    ScopeFactory.runInScope(new TestScope("submitted"), () -> executor.execute(() -> seen.set(ScopeFactory.getScope(TestScope.class).getValue())));
+
+    Assert.assertEquals(seen.get(), "submitted");
+  }
+
+  public void testWrappedExecutorSnapshotsPerTaskNotPerWrap () {
+
+    LinkedList<Runnable> deferred = new LinkedList<>();
+    LinkedList<String> seen = new LinkedList<>();
+    Executor executor;
+
+    executor = ScopeFactory.callInScope(new TestScope("at-wrap"), () -> ScopeFactory.wrapExecutor(deferred::add));
+
+    ScopeFactory.runInScope(new TestScope("first"), () -> executor.execute(() -> seen.add(ScopeFactory.getScope(TestScope.class).getValue())));
+    ScopeFactory.runInScope(new TestScope("second"), () -> executor.execute(() -> seen.add(ScopeFactory.getScope(TestScope.class).getValue())));
+    executor.execute(() -> seen.add(String.valueOf(ScopeFactory.getScope(TestScope.class))));
+
+    for (Runnable runnable : deferred) {
+      joinChild(runnable);
+    }
+
+    Assert.assertEquals(seen, List.of("first", "second", "null"));
+  }
+
+  public void testWrappedThreadFactoryBindsEveryThreadItCreates () {
+
+    LinkedList<String> seen = new LinkedList<>();
+    ThreadFactory threadFactory;
+
+    threadFactory = ScopeFactory.callInScope(new TestScope("at-wrap"), () -> ScopeFactory.wrapThreadFactory(ScopeFactoryTest::namedThread));
+
+    for (int count = 0; count < 2; count++) {
+      join(threadFactory.newThread(() -> seen.add(ScopeFactory.getScope(TestScope.class).getValue())));
+    }
+
+    Assert.assertEquals(seen, List.of("at-wrap", "at-wrap"));
+  }
+
+  public void testWrappedThreadFactorySnapshotsAtWrapNotAtNewThread () {
+
+    AtomicReference<String> seen = new AtomicReference<>();
+    ThreadFactory threadFactory;
+
+    threadFactory = ScopeFactory.callInScope(new TestScope("at-wrap"), () -> ScopeFactory.wrapThreadFactory(ScopeFactoryTest::namedThread));
+
+    ScopeFactory.runInScope(new TestScope("at-new-thread"), () -> join(threadFactory.newThread(() -> seen.set(ScopeFactory.getScope(TestScope.class).getValue()))));
+
+    Assert.assertEquals(seen.get(), "at-wrap");
+  }
+
+  public void testWrappedThreadFactoryFromUnboundThreadBindsNothing () {
+
+    AtomicReference<TestScope> seen = new AtomicReference<>(new TestScope("sentinel"));
+    ThreadFactory threadFactory = ScopeFactory.wrapThreadFactory(ScopeFactoryTest::namedThread);
+
+    join(threadFactory.newThread(() -> seen.set(ScopeFactory.getScope(TestScope.class))));
+
+    Assert.assertNull(seen.get());
+  }
+
   public static class TestScope implements Scope {
 
     private final String value;
@@ -290,7 +408,7 @@ public class ScopeFactoryTest {
 
   }
 
-  public static class Lifecycle implements Scope, LifecycleAware {
+  public static class Lifecycle implements Scope, ScopeLifecycleAware {
 
     private final LinkedList<String> events;
     private final String name;

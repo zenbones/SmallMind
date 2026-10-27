@@ -32,50 +32,86 @@
  */
 package org.smallmind.persistence.sql;
 
-import java.util.concurrent.ConcurrentHashMap;
 import javax.sql.CommonDataSource;
-import javax.sql.DataSource;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
-import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.persistence.orm.ORMInitializationException;
 
 /**
- * Simple application-scoped registry mapping string keys to {@link CommonDataSource} instances.
- * Intended for frameworks that need to look up named data sources at runtime.
+ * Registry of {@link CommonDataSource} instances that bridges {@link DataSourceScopeManager} and
+ * {@link DataSourceContextManager}.
+ * <p>
+ * {@code register} writes to every per-application registry bound on the calling thread: the scope flavor when a
+ * {@link PerApplicationScope} is bound, and the context flavor when a {@link PerApplicationContext} is attached, so a
+ * registration made from a thread that has both is visible to threads that later carry only one of them. Lookups read
+ * the scope flavor first and fall back to the context flavor when the scope holds nothing and a context is attached,
+ * so a thread bound to a scope that was never written still finds what was registered through the context. A thread
+ * with neither bound delegates to the context flavor and fails with {@code MissingPerApplicationContextException}.
+ * Nothing is ever written to a registry whose binding is absent.
  */
-public class DataSourceManager implements PerApplicationDataManager {
+public class DataSourceManager {
 
   /**
-   * Registers a data source under the given key in the per-application context.
+   * Registers a data source under a key in every per-application registry bound on the current thread.
    *
    * @param key        lookup key
-   * @param dataSource data source to store
+   * @param dataSource the data source to register
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static void register (String key, CommonDataSource dataSource) {
 
-    ConcurrentHashMap<String, CommonDataSource> dataSourceMap;
-
-    if ((dataSourceMap = PerApplicationContext.getPerApplicationData(DataSourceManager.class, ConcurrentHashMap.class)) == null) {
-      PerApplicationContext.setPerApplicationData(DataSourceManager.class, dataSourceMap = new ConcurrentHashMap<>());
+    if (PerApplicationScope.isBound()) {
+      DataSourceScopeManager.register(key, dataSource);
+      if (PerApplicationContext.isBound()) {
+        DataSourceContextManager.register(key, dataSource);
+      }
+    } else {
+      DataSourceContextManager.register(key, dataSource);
     }
-    dataSourceMap.put(key, dataSource);
   }
 
   /**
-   * Retrieves a data source for the provided key.
+   * Retrieves a data source for the provided key, scope flavor first, then context flavor.
    *
    * @param key lookup key
    * @return registered {@link CommonDataSource}
-   * @throws ORMInitializationException if no data source is registered for the key
+   * @throws ORMInitializationException                                          if no data source is registered for the key in any bound registry
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static CommonDataSource getDataSource (String key) {
 
     CommonDataSource dataSource;
 
-    if ((dataSource = (DataSource)PerApplicationContext.getPerApplicationData(DataSourceManager.class, ConcurrentHashMap.class).get(key)) == null) {
+    if ((dataSource = findDataSource(key)) == null) {
       throw new ORMInitializationException("No DataSource was mapped to the key(%s)", key);
     }
 
     return dataSource;
+  }
+
+  /**
+   * Looks up a data source by key, scope flavor first, then context flavor, without failing when none is registered.
+   *
+   * @param key lookup key
+   * @return the registered {@link CommonDataSource}, or {@code null} if none is registered for the key in any bound registry
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the current thread; only an unregistered key yields {@code null}
+   */
+  public static CommonDataSource findDataSource (String key) {
+
+    if (PerApplicationScope.isBound()) {
+
+      CommonDataSource dataSource;
+
+      if ((dataSource = DataSourceScopeManager.findDataSource(key)) != null) {
+
+        return dataSource;
+      }
+      if (!PerApplicationContext.isBound()) {
+
+        return null;
+      }
+    }
+
+    return DataSourceContextManager.findDataSource(key);
   }
 }

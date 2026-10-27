@@ -37,16 +37,21 @@ package org.smallmind.quorum.pool;
  * application-wide {@link PoolManager}.
  * <p>
  * Subclasses inherit the ability to publish themselves globally via {@link #register()}, which
- * stores the pool instance in the current per-application context so that other components can
- * retrieve it without holding a direct reference.
+ * stores the pool instance through {@link PoolManager} in every per-application registry bound on the
+ * calling thread — the scope's when a {@code PerApplicationScope} is bound, the context's when a
+ * {@code PerApplicationContext} is attached — so that other components can retrieve it without holding
+ * a direct reference.
  */
 public abstract class Pool {
 
   /**
    * Publishes this pool instance to the application-wide {@link PoolManager}.
    * <p>
-   * After this call, {@link PoolManager#getPool()} will return this instance for the current
-   * per-application context.
+   * After this call, {@link PoolManager#getPool()} will return this instance from every per-application
+   * registry bound on the calling thread — the scope's when a {@code PerApplicationScope} is bound, the
+   * context's when a {@code PerApplicationContext} is attached.
+   *
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public void register () {
 

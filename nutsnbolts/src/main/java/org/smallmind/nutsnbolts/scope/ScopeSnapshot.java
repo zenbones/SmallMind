@@ -35,7 +35,7 @@ package org.smallmind.nutsnbolts.scope;
 /**
  * An immutable capture of the scopes bound on the thread that called {@link ScopeFactory#snapshot()}. Running an operation through the snapshot rebinds exactly those scopes for the operation's dynamic extent on whichever thread performs the run, which is the explicit replacement for thread-local inheritance.
  * <p>
- * A snapshot may be run any number of times, on any thread. It does not fire {@link LifecycleAware} callbacks; those belong to the original entry through {@link ScopeFactory}.
+ * A snapshot may be run any number of times, on any thread. It does not fire {@link ScopeLifecycleAware} callbacks; those belong to the original entry through {@link ScopeFactory}.
  */
 public final class ScopeSnapshot {
 

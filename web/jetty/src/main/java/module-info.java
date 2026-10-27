@@ -35,7 +35,6 @@ module org.smallmind.web.jetty {
   requires jakarta.websocket;
   requires jakarta.websocket.client;
   requires jakarta.xml.ws;
-  requires jdk.httpserver;
   requires org.eclipse.jetty.ee10.servlet;
   requires org.eclipse.jetty.ee10.websocket.jakarta.server;
   requires org.eclipse.jetty.http;
@@ -49,6 +48,7 @@ module org.smallmind.web.jetty {
   requires spring.web;
 
   requires transitive jakarta.servlet;
+  requires transitive jdk.httpserver;
   requires transitive org.eclipse.jetty.util;
   requires transitive org.glassfish.jersey.core.server;
   requires transitive org.smallmind.nutsnbolts;

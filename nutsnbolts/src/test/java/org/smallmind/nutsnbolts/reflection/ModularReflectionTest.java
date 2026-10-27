@@ -61,6 +61,45 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class ModularReflectionTest {
 
+  private static Object createProxy (ModuleLayer moduleLayer, Class<?> toBeProxiedClass, InvocationHandler handler, boolean defineInProxiedModule)
+    throws Exception {
+
+    Method createProxyMethod = moduleLayer.findLoader("org.smallmind.nutsnbolts").loadClass(ProxyGenerator.class.getName()).getMethod("createProxy", Class.class, InvocationHandler.class, boolean.class);
+
+    return createProxyMethod.invoke(null, toBeProxiedClass, handler, defineInProxiedModule);
+  }
+
+  private static ModuleLayer createModuleLayer (Path sourceDirectory, String... moduleNames)
+    throws Exception {
+
+    Path nutsnboltsDirectory = Path.of(ProxyGenerator.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+    Path asmJar = Path.of(ClassReader.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+    Path classDirectory = Files.createTempDirectory("modular-reflection-modules");
+    Set<String> rootModuleNames = new HashSet<>(Set.of(moduleNames));
+    Configuration configuration;
+
+    if (!Files.isRegularFile(nutsnboltsDirectory.resolve("module-info.class"))) {
+      throw new SkipException("The main classes of org.smallmind.nutsnbolts are not an exploded module at " + nutsnboltsDirectory);
+    }
+
+    Assert.assertEquals(ToolProvider.getSystemJavaCompiler().run(null, null, null, "-d", classDirectory.toString(), "--module-path", nutsnboltsDirectory.toString(), "--module-source-path", sourceDirectory.toString(), "--module", String.join(",", moduleNames)), 0);
+
+    rootModuleNames.add("org.smallmind.nutsnbolts");
+    rootModuleNames.add("org.objectweb.asm");
+    configuration = ModuleLayer.boot().configuration().resolve(ModuleFinder.of(classDirectory, nutsnboltsDirectory, asmJar), ModuleFinder.of(), rootModuleNames);
+
+    return ModuleLayer.boot().defineModulesWithOneLoader(configuration, ClassLoader.getPlatformClassLoader());
+  }
+
+  private static void writeModuleSource (Path sourceDirectory, String moduleName, String moduleDeclaration, String className, String classSource)
+    throws IOException {
+
+    Path moduleDirectory = Files.createDirectories(sourceDirectory.resolve(moduleName));
+
+    Files.writeString(moduleDirectory.resolve("module-info.java"), moduleDeclaration);
+    Files.writeString(Files.createDirectories(moduleDirectory.resolve(moduleName.replace('.', File.separatorChar))).resolve(className + ".java"), classSource);
+  }
+
   public void testProxyIsDefinedInModuleThatOpensItsPackageOnlyToThisModule ()
     throws Exception {
 
@@ -146,44 +185,5 @@ public class ModularReflectionTest {
       Assert.assertTrue(invocationTargetException.getCause() instanceof IllegalAccessException);
       Assert.assertTrue(invocationTargetException.getCause().getMessage().contains("does not open loaded.model to unnamed module"), invocationTargetException.getCause().getMessage());
     }
-  }
-
-  private static Object createProxy (ModuleLayer moduleLayer, Class<?> toBeProxiedClass, InvocationHandler handler, boolean defineInProxiedModule)
-    throws Exception {
-
-    Method createProxyMethod = moduleLayer.findLoader("org.smallmind.nutsnbolts").loadClass(ProxyGenerator.class.getName()).getMethod("createProxy", Class.class, InvocationHandler.class, boolean.class);
-
-    return createProxyMethod.invoke(null, toBeProxiedClass, handler, defineInProxiedModule);
-  }
-
-  private static ModuleLayer createModuleLayer (Path sourceDirectory, String... moduleNames)
-    throws Exception {
-
-    Path nutsnboltsDirectory = Path.of(ProxyGenerator.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-    Path asmJar = Path.of(ClassReader.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-    Path classDirectory = Files.createTempDirectory("modular-reflection-modules");
-    Set<String> rootModuleNames = new HashSet<>(Set.of(moduleNames));
-    Configuration configuration;
-
-    if (!Files.isRegularFile(nutsnboltsDirectory.resolve("module-info.class"))) {
-      throw new SkipException("The main classes of org.smallmind.nutsnbolts are not an exploded module at " + nutsnboltsDirectory);
-    }
-
-    Assert.assertEquals(ToolProvider.getSystemJavaCompiler().run(null, null, null, "-d", classDirectory.toString(), "--module-path", nutsnboltsDirectory.toString(), "--module-source-path", sourceDirectory.toString(), "--module", String.join(",", moduleNames)), 0);
-
-    rootModuleNames.add("org.smallmind.nutsnbolts");
-    rootModuleNames.add("org.objectweb.asm");
-    configuration = ModuleLayer.boot().configuration().resolve(ModuleFinder.of(classDirectory, nutsnboltsDirectory, asmJar), ModuleFinder.of(), rootModuleNames);
-
-    return ModuleLayer.boot().defineModulesWithOneLoader(configuration, ClassLoader.getPlatformClassLoader());
-  }
-
-  private static void writeModuleSource (Path sourceDirectory, String moduleName, String moduleDeclaration, String className, String classSource)
-    throws IOException {
-
-    Path moduleDirectory = Files.createDirectories(sourceDirectory.resolve(moduleName));
-
-    Files.writeString(moduleDirectory.resolve("module-info.java"), moduleDeclaration);
-    Files.writeString(Files.createDirectories(moduleDirectory.resolve(moduleName.replace('.', File.separatorChar))).resolve(className + ".java"), classSource);
   }
 }

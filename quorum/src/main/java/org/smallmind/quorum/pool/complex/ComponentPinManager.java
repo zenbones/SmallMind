@@ -48,6 +48,8 @@ import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.claxon.registry.meter.TachometerBuilder;
 import org.smallmind.nutsnbolts.lang.StackTrace;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.scope.ScopeException;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -85,6 +87,7 @@ public class ComponentPinManager<C> {
   private final DeconstructionQueue deconstructionQueue = new DeconstructionQueue();
   private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
   private final AtomicInteger size = new AtomicInteger(0);
+  private volatile PerApplicationScope resolvedPerApplicationScope;
 
   /**
    * Creates a manager for the given pool.
@@ -97,20 +100,37 @@ public class ComponentPinManager<C> {
   }
 
   /**
-   * Starts the manager: launches the {@link DeconstructionQueue} background worker and
-   * pre-populates the pool with {@code max(minPoolSize, initialPoolSize)} components.
+   * Starts the manager: resolves the scope handed to the pool against the scope bound on the calling thread and
+   * keeps the result as the scope the pool's own threads run inside until the next shutdown, launches the
+   * {@link DeconstructionQueue} background worker inside that scope, and pre-populates the pool with
+   * {@code max(minPoolSize, initialPoolSize)} components.
    * <p>
    * If another thread is concurrently starting the manager, this method polls until that
    * thread completes.
    *
-   * @throws ComponentPoolException if any component cannot be created during startup or if
-   *                                the startup wait is interrupted
+   * @throws ComponentPoolException if any component cannot be created during startup (the pool returns to
+   *                                {@code STOPPED} first) or if the startup wait is interrupted
+   * @throws ScopeException         if the pool was given a scope and a different scope is bound on the calling
+   *                                thread (the pool returns to {@code STOPPED} first)
    */
   public void startup ()
     throws ComponentPoolException {
 
     if (statusRef.compareAndSet(ComponentStatus.STOPPED, ComponentStatus.STARTING)) {
-      deconstructionQueue.startup();
+
+      PerApplicationScope perApplicationScope;
+
+      try {
+        perApplicationScope = PerApplicationScope.resolve(componentPool.getPerApplicationScope());
+      } catch (ScopeException scopeException) {
+        resolvedPerApplicationScope = null;
+        statusRef.set(ComponentStatus.STOPPED);
+
+        throw scopeException;
+      }
+
+      resolvedPerApplicationScope = perApplicationScope;
+      deconstructionQueue.startup(perApplicationScope);
 
       backingLock.writeLock().lock();
       try {
@@ -131,6 +151,7 @@ public class ComponentPinManager<C> {
         freeQueue.clear();
         backingMap.clear();
         size.set(0);
+        resolvedPerApplicationScope = null;
         statusRef.set(ComponentStatus.STOPPED);
 
         throw new ComponentPoolException(exception);
@@ -285,10 +306,13 @@ public class ComponentPinManager<C> {
       if (componentPool.getComplexPoolConfig().getCreationTimeoutMillis() > 0) {
 
         ComponentCreationWorker<C> creationWorker;
+        PerApplicationScope perApplicationScope;
         Thread workerThread;
 
         creationWorker = new ComponentCreationWorker<>(componentPool);
-        workerThread = Thread.ofVirtual().name("quorum-component-creator-" + componentPool.getPoolName()).start(creationWorker);
+        perApplicationScope = resolvedPerApplicationScope;
+        //  The creator thread runs the caller's ComponentInstanceFactory, which may resolve per-application data.
+        workerThread = Thread.ofVirtual().name("quorum-component-creator-" + componentPool.getPoolName()).start((perApplicationScope == null) ? creationWorker : () -> perApplicationScope.run(creationWorker));
 
         workerThread.join(componentPool.getComplexPoolConfig().getCreationTimeoutMillis());
         if (creationWorker.abort()) {
@@ -516,6 +540,8 @@ public class ComponentPinManager<C> {
       } catch (InterruptedException | TimeoutException exception) {
         LoggerManager.getLogger(ComponentPinManager.class).error(exception);
       }
+
+      resolvedPerApplicationScope = null;
 
       statusRef.set(ComponentStatus.STOPPED);
     } else {

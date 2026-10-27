@@ -35,7 +35,8 @@ package org.smallmind.phalanx.wire;
 import java.time.LocalDateTime;
 import org.smallmind.nutsnbolts.context.ContextException;
 import org.smallmind.nutsnbolts.context.ContextFactory;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.phalanx.wire.spring.WireProxyFactory;
 import org.smallmind.phalanx.wire.transport.RequestTransport;
 import org.smallmind.phalanx.wire.transport.ResponseTransport;
@@ -68,8 +69,12 @@ public class MockWireTest {
     responseTransport = context.getBean("rabbitmqResponseTransport", RabbitMQResponseTransport.class);
     */
 
-    //  This block loads the Mock backed Transport layer
-    context = new ClassPathXmlApplicationContext("org/smallmind/nutsnbolts/examples/foundation.xml", "org/smallmind/testbench/logger/logging.xml", "org/smallmind/phalanx/wire/mock-wire.xml");
+    //  This block loads the Mock backed Transport layer; the shipped XML passes null for the scope, so the router and
+    //  transports adopt the test-owned scope the refresh runs inside
+    PerApplicationScope perApplicationScope = new PerApplicationScope();
+
+    context = new ClassPathXmlApplicationContext(new String[] {"org/smallmind/nutsnbolts/examples/foundation.xml", "org/smallmind/testbench/logger/logging.xml", "org/smallmind/phalanx/wire/mock-wire.xml"}, false);
+    perApplicationScope.run(context::refresh);
     requestTransport = context.getBean("mockRequestTransport", MockRequestTransport.class);
     responseTransport = context.getBean("mockResponseTransport", MockResponseTransport.class);
 

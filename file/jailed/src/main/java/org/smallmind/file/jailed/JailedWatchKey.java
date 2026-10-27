@@ -134,7 +134,6 @@ public class JailedWatchKey implements WatchKey {
    * @throws UncheckedIOException if the context can not be translated into jail space
    * @throws SecurityException    if the context lies outside the jail
    */
-  @SuppressWarnings("unchecked")
   private WatchEvent<?> translateWatchEvent (WatchEvent<?> nativeWatchEvent) {
 
     if (!(nativeWatchEvent.context() instanceof Path)) {

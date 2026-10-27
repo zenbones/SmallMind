@@ -35,7 +35,10 @@ package org.smallmind.nutsnbolts.scope;
 import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 /**
- * Unchecked exception indicating an error during scope management, such as an unsatisfied {@link ExpectedScopes} declaration or an attempt to bind a {@code null} scope.
+ * Unchecked exception indicating an error during scope management, such as an unsatisfied {@link ExpectedScopes}
+ * declaration, an attempt to bind a {@code null} scope, a {@code PerApplicationScope} handed to a servlet-context
+ * listener that differs from the one already published, or a web server bean configured with a
+ * {@code PerApplicationScope} other than the one bound on the thread refreshing the Spring context.
  */
 public class ScopeException extends FormattedRuntimeException {
 

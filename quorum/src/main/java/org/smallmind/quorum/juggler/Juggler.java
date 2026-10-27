@@ -116,7 +116,7 @@ public class Juggler<P, R> implements BlackList<R> {
    * @param jugglingPinFactory   factory that constructs a pin from each provider
    * @param providers            provider instances to wrap, one pin per element
    */
-  public Juggler (Class<P> providerClass, Class<R> resourceClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P... providers) {
+  public Juggler (Class<P> providerClass, Class<R> resourceClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P[] providers) {
 
     this.providerClass = providerClass;
     this.resourceClass = resourceClass;

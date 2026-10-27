@@ -108,6 +108,8 @@ public class GenerateWrapperMojo extends AbstractMojo {
   private Integer startupTimeoutSeconds;
   @Parameter
   private Integer startupCeilingSeconds;
+  @Parameter
+  private Boolean perApplicationScope;
   @Parameter(defaultValue = "0022")
   private String umask;
   @Parameter
@@ -258,6 +260,9 @@ public class GenerateWrapperMojo extends AbstractMojo {
       }
       if (startupCeilingSeconds != null) {
         freemarkerMap.put("startupCeilingSeconds", String.valueOf(startupCeilingSeconds));
+      }
+      if (perApplicationScope != null) {
+        freemarkerMap.put("perApplicationScope", String.valueOf(perApplicationScope));
       }
       if ((runAs != null) && (!runAs.isEmpty())) {
         freemarkerMap.put("runAs", runAs);

@@ -74,7 +74,7 @@ public abstract class ProxySession<F, N> {
    * Creates a proxy session wrapper with configurable boundary and cache defaults.
    *
    * @param dataSourceType   descriptive name of the backing data source
-   * @param sessionSourceKey key used to register this session with the {@link SessionManager}
+   * @param sessionSourceKey key used to register this session with the {@link SessionManager}; {@code null} for the default unnamed source
    * @param boundaryEnforced default transactional boundary enforcement
    * @param cacheEnabled     default cache usage flag
    */
@@ -88,6 +88,9 @@ public abstract class ProxySession<F, N> {
 
   /**
    * Registers this session with the {@link SessionManager} for lookup by session source key.
+   *
+   * @throws IllegalArgumentException                                            if the session source key is the empty string, which is reserved as the stored key of the default unnamed source; use {@code null} for that source
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public void register () {
 

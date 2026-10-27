@@ -32,31 +32,63 @@
  */
 package org.smallmind.nutsnbolts.spring;
 
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
-import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 
 /**
- * Stores and retrieves the application-scoped {@link SpringPropertyAccessor} through a {@link PerApplicationContext}.
+ * Holder for the application's {@link SpringPropertyAccessor} that bridges {@link SpringPropertyAccessorScopeManager}
+ * and {@link SpringPropertyAccessorContextManager}.
+ * <p>
+ * {@code register} writes to every per-application registry bound on the calling thread: the scope flavor when a
+ * {@link PerApplicationScope} is bound, and the context flavor when a {@link PerApplicationContext} is attached, so a
+ * registration made from a thread that has both is visible to threads that later carry only one of them. Lookups read
+ * the scope flavor first and fall back to the context flavor when the scope holds nothing and a context is attached,
+ * so a thread bound to a scope that was never written still finds what was registered through the context. A thread
+ * with neither bound delegates to the context flavor and fails with {@code MissingPerApplicationContextException}.
+ * Nothing is ever written to a registry whose binding is absent.
  */
-public class SpringPropertyAccessorManager implements PerApplicationDataManager {
+public class SpringPropertyAccessorManager {
 
   /**
-   * Stores the given accessor in the per-application context so it can be retrieved globally.
+   * Registers the accessor in every per-application registry bound on the current thread.
    *
-   * @param springPropertyAccessor the accessor to register for the current application
+   * @param springPropertyAccessor the accessor to register
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static void register (SpringPropertyAccessor springPropertyAccessor) {
 
-    PerApplicationContext.setPerApplicationData(SpringPropertyAccessorManager.class, springPropertyAccessor);
+    if (PerApplicationScope.isBound()) {
+      SpringPropertyAccessorScopeManager.register(springPropertyAccessor);
+      if (PerApplicationContext.isBound()) {
+        SpringPropertyAccessorContextManager.register(springPropertyAccessor);
+      }
+    } else {
+      SpringPropertyAccessorContextManager.register(springPropertyAccessor);
+    }
   }
 
   /**
-   * Retrieves the {@link SpringPropertyAccessor} previously registered for the current application.
+   * Returns the registered accessor, scope flavor first, then context flavor.
    *
-   * @return the registered accessor, or {@code null} if none has been registered
+   * @return the registered accessor, or {@code null} if none has been registered in any bound registry
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static SpringPropertyAccessor getSpringPropertyAccessor () {
 
-    return PerApplicationContext.getPerApplicationData(SpringPropertyAccessorManager.class, SpringPropertyAccessor.class);
+    if (PerApplicationScope.isBound()) {
+
+      SpringPropertyAccessor springPropertyAccessor;
+
+      if ((springPropertyAccessor = SpringPropertyAccessorScopeManager.getSpringPropertyAccessor()) != null) {
+
+        return springPropertyAccessor;
+      }
+      if (!PerApplicationContext.isBound()) {
+
+        return null;
+      }
+    }
+
+    return SpringPropertyAccessorContextManager.getSpringPropertyAccessor();
   }
 }

@@ -32,6 +32,20 @@
  */
 package org.smallmind.spark.tanukisoft.integration;
 
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.nutsnbolts.property.PropertyClosure;
+import org.smallmind.nutsnbolts.property.PropertyExpander;
+import org.smallmind.nutsnbolts.property.PropertyExpanderException;
+import org.smallmind.nutsnbolts.scope.MissingPerApplicationScopeException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.spring.PropertyPlaceholderStringValueResolver;
+import org.smallmind.nutsnbolts.spring.SpringPropertyAccessor;
+import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorContextManager;
+import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorManager;
+import org.smallmind.nutsnbolts.util.SystemPropertyMode;
 import org.tanukisoftware.wrapper.WrapperManager;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -42,6 +56,31 @@ import org.testng.annotations.BeforeMethod;
 // executor closes promptly; the property path is exercised with values the real wrapper would accept.
 @org.testng.annotations.Test(groups = "unit")
 public class AbstractWrapperListenerLifecycleTest {
+
+  private static void assertUnbound () {
+
+    try {
+      PerApplicationScope.getPerApplicationData(SampleManager.class, String.class);
+      Assert.fail("The binding should not survive the wrapper callback");
+    } catch (MissingPerApplicationScopeException missingPerApplicationScopeException) {
+      // expected
+    }
+  }
+
+  private static void enablePerApplicationScope () {
+
+    WrapperManager.getProperties().setProperty("spark.per.application.scope", "true");
+  }
+
+  private static SpringPropertyAccessor emptyAccessor () {
+
+    try {
+
+      return new SpringPropertyAccessor(new PropertyPlaceholderStringValueResolver(new PropertyExpander(new PropertyClosure(), false, SystemPropertyMode.FALLBACK, false), new HashMap<>()));
+    } catch (PropertyExpanderException propertyExpanderException) {
+      throw new RuntimeException(propertyExpanderException);
+    }
+  }
 
   @BeforeMethod
   public void resetWrapperManager () {
@@ -203,6 +242,119 @@ public class AbstractWrapperListenerLifecycleTest {
     Assert.assertNull(WrapperManager.lastStopCode());
   }
 
+  // The listener extends PerApplicationContext and runs startup() inside its scope, so a bridging manager called from
+  // startup() writes both maps; a thread the application starts without the scope still finds the registration
+  // through the context it inherits, and a thread handed the scope finds it there.
+  public void testStartupRegistrationsReachBothBindings ()
+    throws Exception {
+
+    BridgeProbingListener listener = new BridgeProbingListener();
+
+    enablePerApplicationScope();
+    Assert.assertNull(listener.start(new String[] {"alpha"}));
+    Assert.assertSame(listener.seenOnUnwrappedThread, listener.accessor, "an un-wrapped child thread must resolve through the inherited context");
+    Assert.assertSame(listener.getPerApplicationScope().call(SpringPropertyAccessorManager::getSpringPropertyAccessor), listener.accessor, "the scope must hold the same registration");
+    Assert.assertSame(SpringPropertyAccessorContextManager.getSpringPropertyAccessor(), listener.accessor, "the context must hold the same registration");
+  }
+
+  // startup() runs inside the listener's own scope: data it registers is visible through that scope afterwards,
+  // and the calling thread is unbound once start() returns.
+  public void testStartRunsStartupInsideTheListenersScope () {
+
+    ScopeProbingListener listener = new ScopeProbingListener();
+
+    enablePerApplicationScope();
+    Assert.assertNull(listener.start(new String[] {"alpha"}));
+    Assert.assertEquals(listener.registered(), "from-startup");
+    assertUnbound();
+  }
+
+  public void testStopRunsShutdownInsideTheListenersScope () {
+
+    ScopeProbingListener listener = new ScopeProbingListener();
+
+    enablePerApplicationScope();
+    Assert.assertNull(listener.start(new String[] {"alpha"}));
+    Assert.assertEquals(listener.stop(0), 0);
+    Assert.assertEquals(listener.seenOnShutdown, "from-startup");
+    assertUnbound();
+  }
+
+  // The wrapper's stop() is reached from inside controlEvent's binding, so the double's stop hook sees the scope.
+  public void testControlEventRunsInsideTheListenersScope () {
+
+    ScopeProbingListener listener = new ScopeProbingListener();
+    AtomicReference<String> seenOnStop = new AtomicReference<>();
+
+    enablePerApplicationScope();
+    WrapperManager.setControlledByNativeWrapper(false);
+    WrapperManager.setStopHook(() -> seenOnStop.set(PerApplicationScope.getPerApplicationData(SampleManager.class, String.class)));
+    Assert.assertNull(listener.start(new String[] {"alpha"}));
+    listener.controlEvent(WrapperManager.WRAPPER_CTRL_C_EVENT);
+    Assert.assertEquals(WrapperManager.lastStopCode(), Integer.valueOf(0));
+    Assert.assertEquals(seenOnStop.get(), "from-startup");
+    assertUnbound();
+  }
+
+  // Without spark.per.application.scope the listener owns no scope: startup runs with the context binding alone, and
+  // getPerApplicationScope() reports null.
+  public void testScopeIsOffUnlessEnabled () {
+
+    BindingProbingListener listener = new BindingProbingListener();
+
+    Assert.assertNull(listener.getPerApplicationScope());
+    Assert.assertNull(listener.start(new String[] {"alpha"}));
+    Assert.assertEquals(listener.scopeBoundOnStartup, Boolean.FALSE, "no scope was asked for");
+    Assert.assertEquals(listener.contextBoundOnStartup, Boolean.TRUE, "the context binding is always established");
+    Assert.assertEquals(listener.stop(0), 0);
+  }
+
+  // Only a value of true, in any letter case and with surrounding whitespace, turns the scope on.
+  public void testScopeFlagTurnsOnOnlyForTrue () {
+
+    WrapperManager.getProperties().setProperty("spark.per.application.scope", "yes");
+    Assert.assertNull(new BindingProbingListener().getPerApplicationScope());
+
+    WrapperManager.getProperties().setProperty("spark.per.application.scope", "false");
+    Assert.assertNull(new BindingProbingListener().getPerApplicationScope());
+
+    WrapperManager.getProperties().setProperty("spark.per.application.scope", " True ");
+    Assert.assertNotNull(new BindingProbingListener().getPerApplicationScope());
+  }
+
+  // The property is consulted once; the scope decided on the first call is the one every callback binds.
+  public void testScopeDecisionIsMadeOnceAndKept () {
+
+    BindingProbingListener listener = new BindingProbingListener();
+    PerApplicationScope perApplicationScope;
+
+    enablePerApplicationScope();
+    perApplicationScope = listener.getPerApplicationScope();
+    Assert.assertNotNull(perApplicationScope);
+
+    WrapperManager.getProperties().remove("spark.per.application.scope");
+    Assert.assertSame(listener.getPerApplicationScope(), perApplicationScope);
+    Assert.assertNull(listener.start(new String[] {"alpha"}));
+    Assert.assertEquals(listener.scopeBoundOnStartup, Boolean.TRUE);
+  }
+
+  // A listener may replace the property lookup with its own policy.
+  public void testScopePolicyCanBeOverridden () {
+
+    BindingProbingListener listener = new BindingProbingListener() {
+
+      @Override
+      protected boolean isPerApplicationScopeEnabled () {
+
+        return true;
+      }
+    };
+
+    Assert.assertNotNull(listener.getPerApplicationScope());
+    Assert.assertNull(listener.start(new String[] {"alpha"}));
+    Assert.assertEquals(listener.scopeBoundOnStartup, Boolean.TRUE);
+  }
+
   // The listener is instantiated by name and handed to the wrapper along with the (expanded) arguments, unchanged.
   public void testMainBootstrapsTheListener ()
     throws Throwable {
@@ -221,6 +373,99 @@ public class AbstractWrapperListenerLifecycleTest {
     WrapperManager.getProperties().setProperty("spark.startup.ceiling", "later");
     AbstractWrapperListener.main(CapturingWrapperListener.class.getName(), "alpha");
     Assert.assertEquals(WrapperManager.startedArguments(), new String[] {"alpha"});
+  }
+
+  public static class SampleManager implements PerApplicationDataManager {
+
+  }
+
+  // Registers a value during startup and reads it back from inside shutdown and controlEvent, proving all three run
+  // bound to the same scope instance.
+  private static class ScopeProbingListener extends AbstractWrapperListener {
+
+    private String seenOnShutdown;
+
+    private String registered () {
+
+      return getPerApplicationScope().call(() -> PerApplicationScope.getPerApplicationData(SampleManager.class, String.class));
+    }
+
+    @Override
+    protected int getStartupTimeoutSeconds () {
+
+      return 0;
+    }
+
+    @Override
+    public void startup (String[] args) {
+
+      PerApplicationScope.setPerApplicationData(SampleManager.class, "from-startup");
+    }
+
+    @Override
+    public void shutdown () {
+
+      seenOnShutdown = PerApplicationScope.getPerApplicationData(SampleManager.class, String.class);
+    }
+  }
+
+  // Records which bindings startup() sees, so the effect of the scope flag can be observed directly.
+  private static class BindingProbingListener extends AbstractWrapperListener {
+
+    private Boolean scopeBoundOnStartup;
+    private Boolean contextBoundOnStartup;
+
+    @Override
+    protected int getStartupTimeoutSeconds () {
+
+      return 0;
+    }
+
+    @Override
+    public void startup (String[] args) {
+
+      scopeBoundOnStartup = PerApplicationScope.isBound();
+      contextBoundOnStartup = PerApplicationContext.isBound();
+    }
+
+    @Override
+    public void shutdown () {
+
+    }
+  }
+
+  // Registers through a bridging manager during startup and, still inside startup, starts a plain thread that reads
+  // it back through the same manager without being handed the scope.
+  private static class BridgeProbingListener extends AbstractWrapperListener {
+
+    private final SpringPropertyAccessor accessor = emptyAccessor();
+    private SpringPropertyAccessor seenOnUnwrappedThread;
+
+    @Override
+    protected int getStartupTimeoutSeconds () {
+
+      return 0;
+    }
+
+    @Override
+    public void startup (String[] args) {
+
+      SpringPropertyAccessorManager.register(accessor);
+
+      Thread thread = new Thread(() -> seenOnUnwrappedThread = SpringPropertyAccessorManager.getSpringPropertyAccessor());
+
+      thread.start();
+      try {
+        thread.join();
+      } catch (InterruptedException interruptedException) {
+        Thread.currentThread().interrupt();
+      }
+    }
+
+    @Override
+    public void shutdown () {
+
+    }
   }
 
   private static class ErrorThrowingListener extends AbstractWrapperListener {

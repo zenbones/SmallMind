@@ -645,7 +645,12 @@ boundary.
 ----
 <1> `dataSourceType` — descriptive, used as the metric tag.
 <2> `sessionSourceKey` — the key the aspects will match against
-    `@Transactional(dataSources=...)`.
+    `@Transactional(dataSources=...)`. Pass `null` to register the session
+    as the default unnamed source, which is what `SessionManager.getSession()`
+    and boundaries that declare no `dataSources` resolve to. The empty
+    string is reserved as that source's stored key: `register` refuses it
+    with `IllegalArgumentException`, because the boundaries match the
+    default only by `null`.
 <3> `boundaryEnforced` — raise `SessionEnforcementException` if a session
     is requested outside a boundary. Set to `true` in production.
 <4> `cacheEnabled` — default value of `isCacheEnabled()` on this session;
@@ -1292,14 +1297,84 @@ The `sql.pool.spring` package adds Spring factory beans that build a
   beans by `ContextIndex` and build one pool per context.
 * `DataSourceLocator` — application-scoped lookup by key.
 
-=== DataSourceManager
+`PooledDataSourceFactoryBean` and `DynamicPooledDataSourceInitializingBean`
+accept an optional `perApplicationScope` property
+(`org.smallmind.nutsnbolts.scope.PerApplicationScope`) and forward it, as
+given, to every `ComponentPool` they build; each pool resolves it once, on
+the thread whose `afterPropertiesSet()` starts the pool, and runs its
+deconstruction timer and creator threads — which inherit no `ScopedValue`
+binding — inside the result (see xref:QUORUM.adoc[]). The same value
+reaches the programmatic path through the `PerApplicationScope` parameter
+of `PooledDataSourceFactory.createPooledDataSource(...)` and
+`PooledConnectionComponentPoolFactory.constructComponentPool(...)`, which
+precedes the `connections` argument; neither method has a scope-less
+overload, and neither resolves the value itself. Passing `null` adopts the
+scope bound on the thread that starts the pool; with none bound either,
+the pool threads carry only the `PerApplicationContext` they inherit — the
+deconstruction timer from the thread that calls the pool's `startup()`
+(under Spring, the factory bean's), each creator thread from the thread
+whose request triggers the creation. A scope that differs from the one
+bound on the starting thread fails the start — under Spring,
+`afterPropertiesSet()` — with
+`org.smallmind.nutsnbolts.scope.ScopeException` (see xref:QUORUM.adoc[]).
 
-`DataSourceManager` is a static registry analogous to `SessionManager`:
-`DataSourceManager.register(key, dataSource)` places a
+`DynamicPooledDataSourceInitializingBean` reads its `jdbc.*` properties
+through `SpringPropertyAccessorManager`. When no `SpringPropertyAccessor`
+is registered under the binding of the thread refreshing it — the
+`PropertyPlaceholderConfigurer` ran under a different binding — it fails
+with `RuntimeBeansException` ("No SpringPropertyAccessor is registered in
+the per-application scope or context bound on this thread; the
+PropertyPlaceholderConfigurer must be refreshed under the same binding as
+this bean"); with no binding on that thread at all it fails with
+`MissingPerApplicationContextException`.
+
+[source,xml]
+----
+<bean id="dataSource"
+      class="org.smallmind.persistence.sql.pool.spring.PooledDataSourceFactoryBean">
+  <property name="perApplicationScope"
+            ref="org.smallmind.spark.perApplicationScope"/>
+  ...
+</bean>
+----
+
+The `ref` resolves under the Tanuki wrapper with its scope on
+(`spark.per.application.scope=true` in `wrapper.conf`, or
+`perApplicationScope` on the plugin), where `SpringContextWrapperListener`
+registers the singleton during the refresh, or under any other host that
+registers a singleton under that name before refreshing (as
+`TESTBENCH.adoc` shows); under the wrapper with its scope off no bean
+exists under that name and the refresh fails with Spring's
+`NoSuchBeanDefinitionException`, so leave the property unset — the pool
+then resolves to no scope.
+
+=== DataSourceContextManager
+
+`DataSourceContextManager` is a static registry analogous to `SessionContextManager`:
+`DataSourceContextManager.register(key, dataSource)` places a
 `CommonDataSource` into the per-application context, and
-`DataSourceManager.getDataSource(key)` retrieves it. Used by runtime
+`DataSourceContextManager.getDataSource(key)` retrieves it. Used by runtime
 components that need a data source but were not given one by
 constructor injection.
+
+`DataSourceScopeManager` offers the same `register` / `getDataSource`
+API resolved through `nutsnbolts`' `PerApplicationScope` instead of
+`PerApplicationContext`: the calling thread must be inside the scope's
+`run` / `call`, an `ApplicationCarrier`, a `wrapThreadFactory` thread, or a
+thread from the scope's `boundThreadFactory` / a task on its
+`boundExecutor`, or the call throws `MissingPerApplicationScopeException`. The pooled data
+sources' `register()` goes through `DataSourceManager`, which bridges
+the two: `register` writes to every
+registry bound on the calling thread (the scope flavor when a scope is
+bound, the context flavor when a context is attached), and lookups read
+the scope flavor first, falling back to the context flavor when the scope
+holds nothing and a context is attached. A thread with neither bound
+fails with `MissingPerApplicationContextException`. Registrations made
+from a thread that has both are therefore visible to threads that later
+carry only one of them.
+`DataSourceManager.findDataSource(key)` returns null for an unregistered
+key where `getDataSource(key)` throws `ORMInitializationException`; on a
+thread with no binding both throw `MissingPerApplicationContextException`.
 
 === DataSourceAvailableTestCondition
 
@@ -1534,11 +1609,41 @@ and attempt to repopulate.
 
 `ByKeySingularVector` and similar lazy-hydrating vectors call
 `OrmDaoManager.get(Class)` at iteration time. The DAO must have called
-`register()` before the first such call. In the canonical Spring wiring
+`register()` before the first such call; until it has, the lookup returns
+null, as does every `findDurableClass()` / `get()` on a thread none of
+whose bound registries holds a registration; a thread with no bound
+registry at all throws `MissingPerApplicationContextException` instead.
+In the canonical Spring wiring
 that happens during context refresh, so a by-key vector read during a
 servlet request is always safe. For standalone tooling that reads from
 the cache outside a Spring context, either call `dao.register()`
 manually or avoid by-key vectors entirely.
+
+`OrmDaoScopeManager` and `SessionScopeManager` are the `PerApplicationScope`
+flavors of `OrmDaoContextManager` and `SessionContextManager`, with the same
+static API; they throw `MissingPerApplicationScopeException` on a thread
+that is not inside the scope's `run` / `call`, a carrier, a
+`wrapThreadFactory` thread, or a thread from the scope's
+`boundThreadFactory` / a task on its `boundExecutor`. Nothing registered directly through one flavor
+is visible through the other. `ORMDao.register()`, `ProxySession.register()`,
+the repository aspect, and the by-key vectors all go through `OrmDaoManager`
+and `SessionManager`, which bridge the two with the same static API:
+`register` writes to every registry bound on the calling thread (the scope
+flavor when a scope is bound, the context flavor when a context is
+attached), and lookups read the scope flavor first, falling back to the
+context flavor when the scope holds nothing and a context is attached. A
+DAO or session registered from a Spring refresh that had both bound (the
+Tanuki wrapper with its scope on, or a refresh thread that already carries
+a context and runs inside `scope.run`) is therefore visible to request
+threads and pool threads whichever binding they carry.
+A thread with neither bound fails with `MissingPerApplicationContextException`.
+`SessionManager.findSession(key)` returns null for an unregistered key
+where `getSession(key)` throws `ORMInitializationException`; on a thread
+with no binding both throw `MissingPerApplicationContextException`.
+None of the session managers is a Spring bean;
+registration happens only through `ProxySession.register()` or a direct
+`register()` call, and the registries are created lazily on first
+registration.
 
 == Minimal Checklist
 

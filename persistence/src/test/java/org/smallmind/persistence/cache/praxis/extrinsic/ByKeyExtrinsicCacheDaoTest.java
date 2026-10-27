@@ -37,7 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.mockito.Mockito;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.persistence.AbstractDurable;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.UpdateMode;
@@ -55,7 +55,7 @@ import org.smallmind.persistence.cache.praxis.Roster;
 import org.smallmind.persistence.cache.praxis.intrinsic.ByReferenceIntrinsicVector;
 import org.smallmind.persistence.cache.praxis.intrinsic.IntrinsicRoster;
 import org.smallmind.persistence.orm.ORMDao;
-import org.smallmind.persistence.orm.OrmDaoManager;
+import org.smallmind.persistence.orm.OrmDaoContextManager;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -76,7 +76,7 @@ public class ByKeyExtrinsicCacheDaoTest {
   public void registerDao () {
 
     // ByKeyExtrinsicVector.add/remove iterate the key roster (for uniqueness), which hydrates keys through
-    // OrmDaoManager; that lookup requires a PerApplicationContext bound to the thread plus a registered DAO.
+    // OrmDaoContextManager; that lookup requires a PerApplicationContext bound to the thread plus a registered DAO.
     new PerApplicationContext();
 
     ORMDao<Long, Widget, ?, ?> ormDao = Mockito.mock(ORMDao.class);
@@ -86,7 +86,7 @@ public class ByKeyExtrinsicCacheDaoTest {
       Mockito.when(ormDao.get(id)).thenReturn(new Widget(id));
     }
 
-    OrmDaoManager.register(Widget.class, ormDao);
+    OrmDaoContextManager.register(Widget.class, ormDao);
   }
 
   private InMemoryCacheDomain<Long, Widget> domain () {

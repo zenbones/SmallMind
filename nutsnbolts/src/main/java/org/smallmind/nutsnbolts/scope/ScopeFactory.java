@@ -39,11 +39,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Static utility that binds {@link Scope} instances, keyed by concrete class, for the dynamic extent of an operation using a {@link ScopedValue}.
  * <p>
- * Unlike a thread-local stack, a scope can not be pushed in one place and popped in another; it is bound only while the operation passed to {@link #callInScope} or {@link #runInScope} is executing, and is automatically unbound when that operation returns or throws. Nested entries for the same scope class shadow the outer binding until the inner operation completes. Bindings are not inherited by threads the operation starts; use {@link #snapshot()} to carry them across a thread boundary explicitly.
+ * Unlike a thread-local stack, a scope can not be pushed in one place and popped in another; it is bound only while the operation passed to {@link #callInScope} or {@link #runInScope} is executing, and is automatically unbound when that operation returns or throws. Nested entries for the same scope class shadow the outer binding until the inner operation completes. Bindings are not inherited by threads the operation starts; use {@link #snapshot()} to carry them across a thread boundary explicitly, {@link #wrapExecutor(Executor)} to have an executor do so for every task it receives, or {@link #wrapThreadFactory(ThreadFactory)} to have every thread a factory creates start under the bindings in effect when the factory was wrapped.
  */
 public class ScopeFactory {
 
@@ -73,7 +75,7 @@ public class ScopeFactory {
   /**
    * Calls the operation with every supplied scope bound, each under its concrete class, for the dynamic extent of the operation. Scopes are bound in array order, so when two scopes share a class the later one is visible. A {@code null} or empty array calls the operation without adding any binding.
    * <p>
-   * For each scope implementing {@link LifecycleAware}, {@code beforeEnter} is called in array order before anything is bound, and {@code afterExit} is called in reverse order after the operation completes, whether normally or by throwing. If a {@code beforeEnter} call throws, {@code afterExit} is still called for the scopes already entered.
+   * For each scope implementing {@link ScopeLifecycleAware}, {@code beforeEnter} is called in array order before anything is bound, and {@code afterExit} is called in reverse order after the operation completes, whether normally or by throwing. If a {@code beforeEnter} call throws, {@code afterExit} is still called for the scopes already entered.
    *
    * @param scopes scopes to bind; elements must not be {@code null}
    * @param op     operation to call while the scopes are bound
@@ -98,8 +100,8 @@ public class ScopeFactory {
         if (scope == null) {
           throw new ScopeException("A null scope can not be entered");
         }
-        if (scope instanceof LifecycleAware) {
-          ((LifecycleAware)scope).beforeEnter();
+        if (scope instanceof ScopeLifecycleAware) {
+          ((ScopeLifecycleAware)scope).beforeEnter();
         }
         enteredCount++;
       }
@@ -107,8 +109,8 @@ public class ScopeFactory {
       return ScopedValue.where(SCOPE_MAP, bind(scopes)).call(op);
     } finally {
       for (int index = enteredCount - 1; index >= 0; index--) {
-        if (scopes[index] instanceof LifecycleAware) {
-          ((LifecycleAware)scopes[index]).afterExit();
+        if (scopes[index] instanceof ScopeLifecycleAware) {
+          ((ScopeLifecycleAware)scopes[index]).afterExit();
         }
       }
     }
@@ -169,6 +171,28 @@ public class ScopeFactory {
   }
 
   /**
+   * Wraps the given {@link ThreadFactory} so that every thread it creates runs its entire body with the scopes that were bound on the current thread when this method was called. The snapshot is taken once, here, and shared by every thread the factory creates; bindings in effect when {@code newThread} is later called play no part. Calling this on an unbound thread yields a factory whose threads run with no scopes bound. Use {@link #wrapExecutor(Executor)} when the bindings to carry are those of the thread submitting each task rather than those of the thread building the pool.
+   *
+   * @param threadFactory the delegate factory whose threads should receive the current bindings
+   * @return a wrapping factory that rebinds the captured scopes on each new thread
+   */
+  public static ThreadFactory wrapThreadFactory (ThreadFactory threadFactory) {
+
+    return new WrappingThreadFactory(snapshot(), threadFactory);
+  }
+
+  /**
+   * Wraps the given {@link Executor} so that every task handed to it runs with the scopes that were bound on the submitting thread at the moment of submission. The snapshot is taken inside {@code execute}, per task, so tasks submitted from different bindings each carry their own; a task submitted from an unbound thread runs with no scopes bound. Nothing is captured when the executor is wrapped.
+   *
+   * @param executor the delegate executor that actually runs the tasks
+   * @return a wrapping executor that rebinds the submitting thread's scopes around each task
+   */
+  public static Executor wrapExecutor (Executor executor) {
+
+    return new SnapshotExecutor(executor);
+  }
+
+  /**
    * Collects the scopes bound on the current thread that are assignment-compatible with at least one of the supplied filter types, validating any {@link ExpectedScopes} declared on the method.
    *
    * @param method        method whose {@link ExpectedScopes} annotation is consulted for required scope types
@@ -219,5 +243,25 @@ public class ScopeFactory {
     }
 
     return Collections.unmodifiableMap(boundMap);
+  }
+
+  private record WrappingThreadFactory(ScopeSnapshot snapshot, ThreadFactory threadFactory) implements ThreadFactory {
+
+    @Override
+    public Thread newThread (Runnable runnable) {
+
+      return threadFactory.newThread(() -> snapshot.run(runnable));
+    }
+  }
+
+  private record SnapshotExecutor(Executor executor) implements Executor {
+
+    @Override
+    public void execute (Runnable runnable) {
+
+      ScopeSnapshot snapshot = snapshot();
+
+      executor.execute(() -> snapshot.run(runnable));
+    }
   }
 }

@@ -54,6 +54,13 @@ import org.smallmind.scribe.pen.LoggerManager;
 /**
  * HTTP servlet that accepts Bayeux long-polling requests, reads the full request body, hands the
  * decoded messages to the server, and completes the response asynchronously.
+ * <p>
+ * The container delivers {@link #doPost} on a thread of its own, which inherits no {@code ScopedValue} binding.
+ * When the server resolved a {@code PerApplicationScope} (see {@code OumuamuaServer#getPerApplicationScope()}), the
+ * protocol's {@code onReceipt} runs inside it through {@code OumuamuaServer.runBound}, and {@code onMessages} runs
+ * on the server's executor, which is bound only when it is the server's default executor rather than one supplied
+ * through the configuration. {@link #doPost} itself, including the body read and the codec parse, runs on the
+ * container thread without the scope, carrying only whatever {@code PerApplicationContext} that thread inherited.
  *
  * @param <V> the concrete {@link Value} type used throughout message processing
  */
@@ -146,7 +153,8 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
           Message<V>[] messages = server.getCodec().from(contentBuffer);
 
-          ((ServletProtocol<V>)connection.getTransport().getProtocol()).onReceipt(messages);
+          //  The request thread is the container's; the protocol listeners run bound.
+          server.runBound(() -> ((ServletProtocol<V>)connection.getTransport().getProtocol()).onReceipt(messages));
           AsyncContext asyncContext = request.startAsync();
           asyncContext.setTimeout(0);
 

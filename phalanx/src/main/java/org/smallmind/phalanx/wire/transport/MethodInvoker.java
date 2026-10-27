@@ -37,16 +37,19 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import org.smallmind.nutsnbolts.context.ContextFactory;
+import org.smallmind.nutsnbolts.scope.ScopeFactory;
 import org.smallmind.phalanx.wire.Methodology;
 import org.smallmind.phalanx.wire.MissingInvocationException;
 import org.smallmind.phalanx.wire.ServiceDefinitionException;
 import org.smallmind.phalanx.wire.signal.Function;
 import org.smallmind.phalanx.wire.signal.WireContext;
+import org.smallmind.phalanx.wire.signal.WireScope;
 
 /**
  * Resolves and invokes service methods on a target implementation object based on inbound
  * {@link Function} descriptors, propagating {@link WireContext} instances onto the
- * {@link ContextFactory} stack for the duration of each call.
+ * {@link ContextFactory} stack and binding {@link WireScope} instances through {@link ScopeFactory}
+ * for the duration of each call.
  */
 public class MethodInvoker {
 
@@ -92,6 +95,38 @@ public class MethodInvoker {
     methodMap.put(new Function(equalsMethod), new Methodology(serviceInterface, equalsMethod, new SyntheticArgument("obj", Object.class)));
   }
 
+  private static WireScope[] withoutNullElements (WireScope[] scopes) {
+
+    WireScope[] compacted;
+    int count = 0;
+    int index = 0;
+
+    if (scopes == null) {
+
+      return null;
+    }
+
+    for (WireScope scope : scopes) {
+      if (scope != null) {
+        count++;
+      }
+    }
+
+    if (count == scopes.length) {
+
+      return scopes;
+    }
+
+    compacted = new WireScope[count];
+    for (WireScope scope : scopes) {
+      if (scope != null) {
+        compacted[index++] = scope;
+      }
+    }
+
+    return compacted;
+  }
+
   /**
    * Finds a registered function that matches the given partial descriptor by name, and optionally
    * by signature and result type when those fields are non-null.
@@ -133,17 +168,22 @@ public class MethodInvoker {
   }
 
   /**
-   * Pushes the supplied wire contexts onto the {@link ContextFactory} stack, invokes the
-   * corresponding method on the target object, then pops the contexts in a {@code finally} block.
+   * Pushes the supplied wire contexts onto the {@link ContextFactory} stack, invokes the corresponding method on
+   * the target object with the supplied wire scopes bound through {@link ScopeFactory#callInScopes}, then pops
+   * the contexts in a {@code finally} block. The scopes are unbound when the invocation returns or throws; the
+   * contexts are pushed before the scopes are bound and popped after they are unbound.
    *
-   * @param contexts  wire contexts to push for the duration of the call; may be {@code null} or empty
+   * @param contexts  wire contexts to push for the duration of the call; may be {@code null} or empty, and
+   *                  {@code null} elements are skipped
+   * @param scopes    wire scopes to bind for the duration of the call; may be {@code null} or empty, and
+   *                  {@code null} elements are skipped
    * @param function  descriptor identifying which method to invoke
    * @param arguments argument values aligned with the method signature
    * @return the return value of the invoked method
    * @throws MissingInvocationException if {@code function} is not present in the service interface
    * @throws Exception                  if the target method throws a checked exception, or reflection fails
    */
-  public Object remoteInvocation (WireContext[] contexts, Function function, Object... arguments)
+  public Object remoteInvocation (WireContext[] contexts, WireScope[] scopes, Function function, Object... arguments)
     throws Exception {
 
     Methodology methodology;
@@ -152,7 +192,7 @@ public class MethodInvoker {
       throw new MissingInvocationException("No method(%s) available in service interface(%s)", function.getName(), serviceInterface.getName());
     }
 
-    if ((contexts != null) && (contexts.length > 0)) {
+    if (contexts != null) {
       for (WireContext context : contexts) {
         if (context != null) {
           ContextFactory.pushContext(context);
@@ -161,7 +201,7 @@ public class MethodInvoker {
     }
 
     try {
-      return methodology.getMethod().invoke(targetObject, arguments);
+      return ScopeFactory.<Object, Exception>callInScopes(withoutNullElements(scopes), () -> methodology.getMethod().invoke(targetObject, arguments));
     } catch (InvocationTargetException invocationTargetException) {
       if ((invocationTargetException.getCause() != null) && (invocationTargetException.getCause() instanceof Exception)) {
         throw (Exception)invocationTargetException.getCause();
@@ -169,7 +209,7 @@ public class MethodInvoker {
         throw invocationTargetException;
       }
     } finally {
-      if ((contexts != null) && (contexts.length > 0)) {
+      if (contexts != null) {
         for (WireContext context : contexts) {
           if (context != null) {
             ContextFactory.popContext(context.getClass());

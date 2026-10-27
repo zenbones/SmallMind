@@ -35,6 +35,7 @@ package org.smallmind.phalanx.wire;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import org.smallmind.phalanx.wire.signal.WireContext;
+import org.smallmind.phalanx.wire.signal.WireScope;
 
 /**
  * {@link ParameterExtractor} that always returns a fixed, pre-configured constant value,
@@ -54,7 +55,7 @@ public class StaticParameterExtractor<T> implements ParameterExtractor<T> {
    * Constructs an extractor that always returns the given constant value.
    *
    * @param parameter the value returned by every
-   *                  {@link #getParameter(Method, HashMap, WireContext...)} call;
+   *                  {@link #getParameter(Method, HashMap, WireContext[], WireScope[])} call;
    *                  may be {@code null}
    */
   public StaticParameterExtractor (T parameter) {
@@ -68,11 +69,12 @@ public class StaticParameterExtractor<T> implements ParameterExtractor<T> {
    * @param method       ignored
    * @param argumentMap  ignored
    * @param wireContexts ignored
+   * @param wireScopes   ignored
    * @return the constant parameter value; may be {@code null}
    * @throws MissingInstanceIdException never thrown by this implementation
    */
   @Override
-  public T getParameter (Method method, HashMap<String, Object> argumentMap, WireContext... wireContexts)
+  public T getParameter (Method method, HashMap<String, Object> argumentMap, WireContext[] wireContexts, WireScope[] wireScopes)
     throws MissingInstanceIdException {
 
     return parameter;

@@ -37,6 +37,7 @@ import org.smallmind.phalanx.wire.Voice;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.phalanx.wire.signal.WireContext;
+import org.smallmind.phalanx.wire.signal.WireScope;
 
 /**
  * Contract for the client-side transport that serializes invocation requests and delivers
@@ -59,11 +60,12 @@ public interface RequestTransport {
    * @param voice     voice that encodes the conversation style (in-only vs. request/reply) and routing hints
    * @param route     route identifying the target service, version, and function
    * @param arguments named argument map to include in the request payload
-   * @param contexts  wire contexts to propagate to the remote side
+   * @param contexts  wire contexts to propagate to the remote side; may be {@code null} or empty
+   * @param scopes    wire scopes to propagate to the remote side; may be {@code null} or empty
    * @return the decoded return value for request/reply calls, or {@code null} for in-only calls
    * @throws Throwable if submission fails, the call times out, or the remote side reports an error
    */
-  Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
+  Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext[] contexts, WireScope[] scopes)
     throws Throwable;
 
   /**

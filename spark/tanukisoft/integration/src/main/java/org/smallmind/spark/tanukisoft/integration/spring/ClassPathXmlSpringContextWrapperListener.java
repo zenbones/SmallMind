@@ -42,13 +42,16 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 public class ClassPathXmlSpringContextWrapperListener extends SpringContextWrapperListener {
 
   /**
-   * Builds a {@link ClassPathXmlApplicationContext} that loads every supplied classpath XML location.
+   * Builds an unrefreshed {@link ClassPathXmlApplicationContext} over every supplied classpath XML location, so
+   * that {@link SpringContextWrapperListener#startup(String[])} can add the post-processor that registers the scope
+   * singleton during the refresh.
    *
    * @param args classpath-relative XML configuration resources for Spring to parse
-   * @return the newly constructed, refreshed application context
+   * @return the newly constructed, unrefreshed application context
    */
+  @Override
   public ConfigurableApplicationContext loadApplicationContext (String[] args) {
 
-    return new ClassPathXmlApplicationContext(args);
+    return new ClassPathXmlApplicationContext(args, false);
   }
 }

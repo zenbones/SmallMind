@@ -40,7 +40,7 @@ import javax.sql.XAConnection;
 import javax.sql.XADataSource;
 import javax.transaction.xa.XAResource;
 import com.mysql.cj.jdbc.MysqlXADataSource;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.persistence.sql.OmnivorousConnectionPoolDataSource;
 import org.smallmind.persistence.sql.XADataSourcePooledConnection;
 import org.smallmind.persistence.sql.testbench.DataSourceAvailableTestCondition;

@@ -71,7 +71,7 @@ public class WireInvocationCircuitTest {
 
   private InvocationSignal invocation (boolean inOnly, int version, String service, Function function, Map<String, Object> arguments) {
 
-    return new InvocationSignal(inOnly, new Route(version, service, function), arguments);
+    return new InvocationSignal(inOnly, new Route(version, service, function), arguments, null, null);
   }
 
   @Test

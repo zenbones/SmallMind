@@ -32,6 +32,7 @@
  */
 package org.smallmind.bayeux.oumuamua.server.impl;
 
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import jakarta.servlet.ServletConfig;
@@ -56,6 +57,10 @@ import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.bayeux.oumuamua.server.spi.json.jackson.JaxbDeserializer;
 import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxCodec;
 import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.nutsnbolts.scope.MissingPerApplicationScopeException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.scope.ScopeException;
 import org.smallmind.scribe.pen.Level;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -78,6 +83,17 @@ public class OumuamuaServerTest {
   private OumuamuaConfiguration<OrthodoxValue> configuration;
   private Protocol<OrthodoxValue> protocol;
 
+  private static Object probeScope () {
+
+    try {
+
+      return PerApplicationScope.getPerApplicationData(SampleManager.class, String.class);
+    } catch (MissingPerApplicationScopeException missingPerApplicationScopeException) {
+
+      return missingPerApplicationScopeException;
+    }
+  }
+
   @BeforeMethod
   public void beforeMethod () {
 
@@ -93,6 +109,94 @@ public class OumuamuaServerTest {
     throws OumuamuaException {
 
     return new OumuamuaServer<>(configuration);
+  }
+
+  // The executor the server builds for itself runs every task inside the configured scope, so work submitted from
+  // an unbound thread still sees the scope's data.
+  @Test
+  public void testDefaultExecutorRunsTasksInsideTheConfiguredScope ()
+    throws Exception {
+
+    PerApplicationScope perApplicationScope = new PerApplicationScope();
+
+    perApplicationScope.run(() -> PerApplicationScope.setPerApplicationData(SampleManager.class, "scoped"));
+    configuration.setPerApplicationScope(perApplicationScope);
+
+    OumuamuaServer<OrthodoxValue> server = newServer();
+
+    Assert.assertSame(server.getPerApplicationScope(), perApplicationScope);
+    Assert.assertEquals(server.getExecutorService().submit(OumuamuaServerTest::probeScope).get(), "scoped");
+  }
+
+  // With no scope configured and none bound on the constructing thread, the server binds nothing.
+  @Test
+  public void testDefaultExecutorIsUnboundWithoutAScope ()
+    throws Exception {
+
+    OumuamuaServer<OrthodoxValue> server = newServer();
+
+    Assert.assertNull(server.getPerApplicationScope());
+    Assert.assertTrue(server.getExecutorService().submit(OumuamuaServerTest::probeScope).get() instanceof MissingPerApplicationScopeException);
+  }
+
+  // With no scope configured, the server adopts the scope bound on its constructing thread and keeps it, so tasks
+  // submitted later from an unbound thread still run inside that scope.
+  @Test
+  public void testServerAdoptsTheScopeBoundAtConstructionWhenNoneIsConfigured ()
+    throws Exception {
+
+    PerApplicationScope boundScope = new PerApplicationScope();
+
+    boundScope.run(() -> PerApplicationScope.setPerApplicationData(SampleManager.class, "scoped"));
+
+    OumuamuaServer<OrthodoxValue> server = boundScope.call(this::newServer);
+
+    Assert.assertSame(server.getPerApplicationScope(), boundScope);
+    Assert.assertEquals(server.getExecutorService().submit(OumuamuaServerTest::probeScope).get(), "scoped");
+  }
+
+  // A configured scope that differs from the one bound on the constructing thread is rejected.
+  @Test
+  public void testConstructorRejectsAConfiguredScopeThatDiffersFromTheBoundOne () {
+
+    PerApplicationScope boundScope = new PerApplicationScope();
+
+    configuration.setPerApplicationScope(new PerApplicationScope());
+
+    Assert.assertThrows(ScopeException.class, () -> boundScope.call(this::newServer));
+  }
+
+  // A configured scope that is the one bound on the constructing thread is simply used.
+  @Test
+  public void testConstructorAcceptsAConfiguredScopeThatIsTheBoundOne ()
+    throws Exception {
+
+    PerApplicationScope perApplicationScope = new PerApplicationScope();
+
+    configuration.setPerApplicationScope(perApplicationScope);
+
+    OumuamuaServer<OrthodoxValue> server = perApplicationScope.call(this::newServer);
+
+    Assert.assertSame(server.getPerApplicationScope(), perApplicationScope);
+  }
+
+  // A supplied executor is the application's to wrap; the server does not rebind its threads.
+  @Test
+  public void testSuppliedExecutorIsUsedAsGiven ()
+    throws Exception {
+
+    PerApplicationScope perApplicationScope = new PerApplicationScope();
+
+    configuration.setPerApplicationScope(perApplicationScope);
+    configuration.setExecutorService(Executors.newSingleThreadExecutor());
+
+    OumuamuaServer<OrthodoxValue> server = newServer();
+
+    try {
+      Assert.assertTrue(server.getExecutorService().submit(OumuamuaServerTest::probeScope).get() instanceof MissingPerApplicationScopeException);
+    } finally {
+      server.getExecutorService().shutdown();
+    }
   }
 
   @Test(expectedExceptions = OumuamuaException.class)
@@ -563,6 +667,10 @@ public class OumuamuaServerTest {
     server.stop();
 
     Mockito.verify(backbone).shutDown();
+  }
+
+  public static class SampleManager implements PerApplicationDataManager {
+
   }
 
   private static class TwoRouteService implements BayeuxService<OrthodoxValue> {

@@ -43,6 +43,8 @@ import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.scope.ScopeException;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.ServiceDefinitionException;
 import org.smallmind.phalanx.wire.TransportException;
@@ -55,6 +57,7 @@ import org.smallmind.phalanx.wire.transport.TransportState;
 import org.smallmind.phalanx.wire.transport.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.phalanx.wire.transport.WiredService;
+import org.smallmind.phalanx.worker.TransferringWorkQueue;
 import org.smallmind.phalanx.worker.WorkManager;
 import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.WorkerFactory;
@@ -70,6 +73,14 @@ import org.smallmind.phalanx.worker.WorkerFactory;
  *   <li><b>shout</b> – topic listeners without instance filtering
  *   <li><b>whisper</b> – topic listeners filtered to this transport's unique instance id
  * </ul>
+ *
+ * <p>A {@code WireContext} element of an inbound invocation can only be decoded on a worker carrying a
+ * {@code PerApplicationContext}, and a {@code WireScope} element only on one running inside the configured
+ * scope; a worker lacking the needed binding fails the decode after the message was acknowledged under the
+ * default {@code AUTO_ACKNOWLEDGE} policy, so the invocation is dropped and logged rather than redelivered: an
+ * {@link org.smallmind.phalanx.wire.InOut} caller times out and an {@link org.smallmind.phalanx.wire.InOnly}
+ * message is lost. Under {@code CLIENT_ACKNOWLEDGE} phalanx never calls {@code acknowledge()}, so the provider
+ * may redeliver the message when the session recovers.
  */
 public class JmsResponseTransport extends WorkManager<InvocationWorker, Message> implements WorkerFactory<InvocationWorker, Message>, ResponseTransport, ResponseTransmitter {
 
@@ -98,14 +109,21 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
    * @param clusterSize          number of independent connection managers per channel
    * @param concurrencyLimit     maximum number of concurrent {@link InvocationWorker} threads
    * @param maximumMessageLength maximum byte length of any single inbound request payload
+   * @param perApplicationScope  the scope to bind on every invocation worker thread and around every
+   *                             {@code onMessage} callback, or {@code null} to adopt the scope bound on the thread
+   *                             that constructs this transport; with none bound either, they run with no scope, the
+   *                             workers carrying only the {@code PerApplicationContext} inherited from the
+   *                             constructing thread and the callbacks only whatever one the provider's delivery
+   *                             thread inherited
+   * @throws ScopeException       if a scope was given and a different scope is bound on the constructing thread
    * @throws InterruptedException if worker start-up is interrupted
    * @throws JMSException         if any JMS resource cannot be created
    * @throws TransportException   if transport initialisation fails
    */
-  public JmsResponseTransport (RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int maximumMessageLength)
+  public JmsResponseTransport (RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int maximumMessageLength, PerApplicationScope perApplicationScope)
     throws InterruptedException, JMSException, TransportException {
 
-    super(InvocationWorker.class, concurrencyLimit);
+    super(InvocationWorker.class, concurrencyLimit, new TransferringWorkQueue<>(), perApplicationScope);
 
     int topicIndex = 0;
 
@@ -114,15 +132,15 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
 
     shoutRequestListeners = new RequestListener[clusterSize];
     for (int index = 0; index < shoutRequestListeners.length; index++) {
-      shoutRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestTopicFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestTopicFactory().getDestination(), serviceGroup, null);
+      shoutRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestTopicFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestTopicFactory().getDestination(), serviceGroup, null, getPerApplicationScope());
     }
     talkRequestListeners = new RequestListener[clusterSize];
     for (int index = 0; index < talkRequestListeners.length; index++) {
-      talkRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestQueueFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestQueueFactory().getDestination(), serviceGroup, null);
+      talkRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestQueueFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestQueueFactory().getDestination(), serviceGroup, null, getPerApplicationScope());
     }
     whisperRequestListeners = new RequestListener[clusterSize];
     for (int index = 0; index < whisperRequestListeners.length; index++) {
-      whisperRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestTopicFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestTopicFactory().getDestination(), serviceGroup, instanceId);
+      whisperRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestTopicFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestTopicFactory().getDestination(), serviceGroup, instanceId, getPerApplicationScope());
     }
 
     responseConnectionManagers = new ConnectionManager[clusterSize];

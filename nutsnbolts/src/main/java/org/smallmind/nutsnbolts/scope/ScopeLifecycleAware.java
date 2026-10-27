@@ -30,20 +30,20 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.context;
+package org.smallmind.nutsnbolts.scope;
 
 /**
- * Optional callback interface for {@link Context} implementations that need notification immediately before being pushed onto or immediately after being popped from the {@link ContextFactory} stack.
+ * Optional callback interface for {@link Scope} implementations that need notification immediately before being bound by {@link ScopeFactory} and immediately after the bound extent has exited.
  */
-public interface LifecycleAware {
+public interface ScopeLifecycleAware {
 
   /**
-   * Called immediately before this context is pushed onto the thread-local stack.
+   * Called on the entering thread immediately before this scope is bound. If this method throws, the scope is not bound and {@link #afterExit()} is not called for it.
    */
-  void beforePush ();
+  void beforeEnter ();
 
   /**
-   * Called immediately after this context has been popped from the thread-local stack.
+   * Called on the entering thread after the scoped operation has completed, whether normally or by throwing.
    */
-  void afterPop ();
+  void afterExit ();
 }

@@ -35,6 +35,7 @@ package org.smallmind.persistence.sql.pool.spring;
 import java.sql.SQLException;
 import javax.sql.CommonDataSource;
 import javax.sql.PooledConnection;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.persistence.sql.pool.AbstractPooledDataSource;
 import org.smallmind.persistence.sql.pool.DataSourceFactory;
 import org.smallmind.persistence.sql.pool.PooledDataSourceFactory;
@@ -52,6 +53,7 @@ public class PooledDataSourceFactoryBean<D extends CommonDataSource, P extends P
   private AbstractPooledDataSource<D, P> dataSource;
   private DataSourceFactory<D, P> dataSourceFactory;
   private ComplexPoolConfig poolConfig;
+  private PerApplicationScope perApplicationScope;
   private DatabaseConnection[] connections;
   private String poolName;
   private String validationQuery;
@@ -186,10 +188,26 @@ public class PooledDataSourceFactoryBean<D extends CommonDataSource, P extends P
   }
 
   /**
+   * Sets the scope the component pool's own threads (deconstruction timer and, when a creation timeout is
+   * configured, the creator thread) run inside. The value is forwarded to the pool as given, and the pool resolves it
+   * once, when {@link #afterPropertiesSet()} starts it, against the scope bound on that thread.
+   *
+   * @param perApplicationScope the scope to bind, or {@code null} to adopt the scope bound on the thread that calls
+   *                            {@link #afterPropertiesSet()}; with none bound either, the threads the pool starts run
+   *                            with no scope, carrying only the {@code PerApplicationContext} they inherit
+   */
+  public void setPerApplicationScope (PerApplicationScope perApplicationScope) {
+
+    this.perApplicationScope = perApplicationScope;
+  }
+
+  /**
    * Builds and starts the pooled data source using the configured parameters.
    *
-   * @throws SQLException           if creation fails
-   * @throws ComponentPoolException if pool startup fails
+   * @throws SQLException                                  if creation fails
+   * @throws ComponentPoolException                        if pool startup fails
+   * @throws org.smallmind.nutsnbolts.scope.ScopeException if a scope was given and a different scope is bound on the
+   *                                                       calling thread
    */
   @Override
   public void afterPropertiesSet ()
@@ -199,7 +217,7 @@ public class PooledDataSourceFactoryBean<D extends CommonDataSource, P extends P
       throw new SQLException("The validity timeout for pool(" + poolName + ") must be set to > 0 seconds");
     }
 
-    dataSource = PooledDataSourceFactory.createPooledDataSource(poolName, dataSourceFactory, validationQuery, maxStatements, validityTimeoutSeconds, poolConfig, connections);
+    dataSource = PooledDataSourceFactory.createPooledDataSource(poolName, dataSourceFactory, validationQuery, maxStatements, validityTimeoutSeconds, poolConfig, perApplicationScope, connections);
     dataSource.startup();
   }
 

@@ -50,9 +50,9 @@ public class Getter implements Serializable {
   private static final Object[] NO_PARAMETERS = new Object[0];
 
   private final Class<?> attributeClass;
-  private transient Method method;
   private final String attributeName;
   private final boolean is;
+  private transient Method method;
 
   /**
    * Wraps the supplied method as a getter, parsing the attribute name from the method name and

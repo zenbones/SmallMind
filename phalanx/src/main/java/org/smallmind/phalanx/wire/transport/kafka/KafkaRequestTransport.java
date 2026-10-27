@@ -53,6 +53,8 @@ import org.smallmind.kafka.utility.KafkaConnectionException;
 import org.smallmind.kafka.utility.KafkaConnector;
 import org.smallmind.kafka.utility.KafkaGroupProtocol;
 import org.smallmind.kafka.utility.KafkaServer;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.scope.ScopeException;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.Voice;
@@ -61,6 +63,7 @@ import org.smallmind.phalanx.wire.signal.InvocationSignal;
 import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.signal.WireContext;
+import org.smallmind.phalanx.wire.signal.WireScope;
 import org.smallmind.phalanx.wire.transport.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RequestMessageRouter;
@@ -75,6 +78,12 @@ import org.smallmind.phalanx.wire.transport.amqp.rabbitmq.RequestMessageRouter;
  * are created on first use and all are closed together during {@link #close()}.  A dedicated
  * {@link KafkaMessageIngester} runs the response consumer threads and completes pending requests
  * via the parent-class callback mechanism.
+ *
+ * <p>A {@code WireContext} element of an invocation can only be decoded on a responding worker that carries a
+ * {@code PerApplicationContext}, and a {@code WireScope} element only on one running inside the configured
+ * scope; a worker lacking the needed binding fails the decode after the record's offset was committed, so the
+ * invocation is dropped and logged rather than redelivered: an {@link org.smallmind.phalanx.wire.InOut} caller
+ * times out and an {@link org.smallmind.phalanx.wire.InOnly} message is lost.
  */
 public class KafkaRequestTransport extends AbstractRequestTransport {
 
@@ -104,17 +113,21 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
    * @param dynamicConsumers          {@code true} to join the response consumer group as dynamic members, which
    *                                  leave the group immediately on shutdown; {@code false} to join as static
    *                                  members identified by {@code <nodeName>-<workerIndex>}
-   * @param dynamicConsumers          {@code true} to join the response consumer group as dynamic members, which
-   *                                  leave the group immediately on shutdown; {@code false} to join as static
-   *                                  members identified by {@code <nodeName>-<workerIndex>}
+   * @param perApplicationScope       the scope every response consumer thread runs inside, or {@code null} to
+   *                                  adopt the scope bound on the thread that constructs this transport; with none
+   *                                  bound either, the consumer threads start with no scope, carrying only the
+   *                                  {@code PerApplicationContext} they inherit from the constructing thread
    * @param servers                   Kafka bootstrap servers to connect to
+   * @throws ScopeException           if a scope was given and a different scope is bound on the constructing thread
    * @throws KafkaConnectionException if no broker becomes reachable within the grace period
    * @throws InterruptedException     if interrupted while the response ingester is starting
    */
-  public KafkaRequestTransport (String nodeName, SignalCodec signalCodec, int concurrencyLimit, long defaultTimeoutSeconds, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, boolean dynamicConsumers, KafkaServer... servers)
+  public KafkaRequestTransport (String nodeName, SignalCodec signalCodec, int concurrencyLimit, long defaultTimeoutSeconds, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, boolean dynamicConsumers, PerApplicationScope perApplicationScope, KafkaServer... servers)
     throws KafkaConnectionException, InterruptedException {
 
     super(defaultTimeoutSeconds);
+
+    PerApplicationScope resolvedPerApplicationScope = PerApplicationScope.resolve(perApplicationScope);
 
     this.signalCodec = signalCodec;
     this.nodeName = nodeName;
@@ -137,7 +150,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
       }
     });
 
-    responseMessageIngester = new KafkaMessageIngester(nodeName, "wire-response-" + callerId, responseTopicName, connector, groupProtocol, dynamicConsumers, new RequestCallback(this, signalCodec), concurrencyLimit).startUp();
+    responseMessageIngester = new KafkaMessageIngester(nodeName, "wire-response-" + callerId, responseTopicName, connector, groupProtocol, dynamicConsumers, new RequestCallback(this, signalCodec), concurrencyLimit, resolvedPerApplicationScope).startUp();
 
     if (!responseMessageIngester.awaitConsumerAssignment((startupGracePeriodSeconds * 1000L) - (System.currentTimeMillis() - start), TimeUnit.MILLISECONDS)) {
       throw new KafkaConnectionException("Unable to confirm consumer readiness within the specified grace period");
@@ -184,13 +197,14 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
    * @param route     identifies the target service, method name, and version
    * @param arguments named method arguments to encode in the invocation signal
    * @param contexts  optional wire contexts forwarded with the invocation
+   * @param scopes    optional wire scopes forwarded with the invocation
    * @return the decoded result object for two-way calls, or {@code null} for {@link ConversationType#IN_ONLY} calls
    * @throws AlreadyClosedException if the transport has been closed before or during this call
    * @throws Throwable              if signal encoding fails, the response times out, or the
    *                                result signal encodes a service-side exception
    */
   @Override
-  public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext[] contexts, WireScope[] scopes)
     throws Throwable {
 
     Producer<Long, byte[]> requestProducer;
@@ -208,7 +222,7 @@ public class KafkaRequestTransport extends AbstractRequestTransport {
     } else {
 
       ProducerRecord<Long, byte[]> record = Instrument.with(RequestMessageRouter.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.CONSTRUCT_MESSAGE.getDisplay())).on(
-        () -> new ProducerRecord<>(topic, signalCodec.encode(new InvocationSignal(inOnly, route, arguments, contexts)))
+        () -> new ProducerRecord<>(topic, signalCodec.encode(new InvocationSignal(inOnly, route, arguments, contexts, scopes)))
       );
 
       record.headers().add(HeaderUtility.MESSAGE_ID, messageId.getBytes());

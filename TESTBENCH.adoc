@@ -398,7 +398,7 @@ For Spring-assembled tests, the module also ships an equivalent `logging.xml` (S
 
 `testbench-foundation` is a resources-only JAR (no Java types) providing a Spring bootstrap context for tests that need one. Importing `classpath:.../foundation.xml` wires:
 
-* `PerApplicationContext` — the per-application context many SmallMind runtime types resolve against (Claxon instrumentation, the ORM DAO registry, the wire context). Several of this repository's components throw without one attached to the current thread, so the foundation context establishes it.
+* `PerApplicationContext` — the per-application context many SmallMind runtime types resolve against (Claxon instrumentation, the ORM DAO registry, the wire context). Several of this repository's components throw without one attached to the current thread, so the foundation context establishes it. Constructing the bean attaches the map to the refresh thread and leaves it there, so every test on that thread, and every thread it starts, carries it.
 * `SpringContextRefreshedAnnouncer` with application name `Epicenter`.
 * `SecurityProviderInitializingBean` registering the BouncyCastle provider.
 * `SystemPropertyInitializingBean` and a `PropertyPlaceholderConfigurer` that resolves placeholders from `classpath:org/smallmind/testbench/foundation/global.yaml` and, if present, `file:${user.home}/.m2/local.yaml` — letting a developer override test properties locally without touching the checked-in defaults.
@@ -409,6 +409,34 @@ The bundled `global.yaml` sets two defaults: `log.level.default: DEBUG` and `wir
 ====
 Tests that do not boot the Spring context but still touch components requiring a per-application context can construct one directly on the test thread with `new PerApplicationContext()` in `@BeforeClass`, as several integration tests in the repository do. The foundation context is the assembly-time convenience; the direct constructor is the programmatic equivalent.
 ====
+
+The foundation context deliberately declares no `PerApplicationScope` bean. A `ScopedValue` binding exists only for the extent of a `run` / `call`, so a scope created *during* the refresh can never be the instance that was bound *around* it; a bean would look right and bind nothing. Components that resolve through the scope flavor (xref:NUTSNBOLTS.adoc#pkg-scope[scope — ScopedValue-bound scopes]) need the test to own the instance instead and refresh inside it; register it as a singleton, under the name the Tanuki wrapper uses, only when a bean definition of your own `ref`s that name:
+
+[source,java]
+----
+private static final PerApplicationScope SCOPE = new PerApplicationScope();
+private static ConfigurableApplicationContext context;
+
+@BeforeClass(groups = "unit")
+public void beforeClass () {
+
+  SCOPE.run(() -> {                                                        // <1>
+    context = new ClassPathXmlApplicationContext(new String[] {"..."}, false);
+    context.addBeanFactoryPostProcessor(                                   // <2>
+      (beanFactory) -> beanFactory.registerSingleton("org.smallmind.spark.perApplicationScope", SCOPE));
+    context.refresh();
+  });
+}
+
+@Override
+public void run (IHookCallBack callBack, ITestResult testResult) {          // <3>
+
+  SCOPE.run(() -> callBack.runTestMethod(testResult));
+}
+----
+<1> The refresh runs inside `SCOPE`, and the foundation's `PerApplicationContext` bean attaches the context map to the same thread when it is instantiated. Because `systemProperties` is a `PriorityOrdered` `BeanFactoryPostProcessor` that `depends-on` `securityProviders`, which `depends-on` `perApplicationContext`, Spring instantiates the context bean before it invokes any post-processor — so even the `SpringPropertyAccessor` that `PropertyPlaceholderConfigurer` registers at post-processor time, and every later library `register(...)`, goes through a bridging `*Manager` and lands in both maps. Only a `BeanFactoryPostProcessor` added programmatically (the lambda in <2>, say), a `BeanDefinitionRegistryPostProcessor`, or a `PriorityOrdered` post-processor the test declares ahead of the `<import>` whose own construction registers something runs before the context bean exists and registers into the scope alone.
+<2> Only needed when a bean definition of your own `ref`s that name; a definition that wants the instance in hand can instead `ref` a bean declared as `<bean id="perApplicationScope" class="org.smallmind.nutsnbolts.scope.PerApplicationScope" factory-method="getBound"/>`, which yields `SCOPE` because the refresh runs inside it, with no registration at all. The shipped `mock-wire.xml` and `rabbitmq-wire.xml` pass `<null/>`, and a web server's `perApplicationScope` property, the phalanx transports, and a pooled data source's `perApplicationScope` can likewise be left unset: constructed or started during a refresh that runs inside `SCOPE`, they adopt it; handed any other instance on that thread, they throw `ScopeException`.
+<3> Implementing TestNG's `IHookable` binds every test method without per-method boilerplate (`runTestMethod` takes the `ITestResult`, so it cannot be passed as a method reference). Put `@Test(groups = "unit")` on the test methods, not on the class: a class-level `@Test` makes the public `run` a test method of its own, which TestNG then fails to inject. Without the class-level annotation nothing inherits its `groups`, so the methods and `@BeforeClass` / `@AfterClass` all need the group explicitly (`@BeforeClass(groups = "unit")`); the repository's surefire run is group-filtered, and an ungrouped method is silently skipped. `@BeforeMethod` / `@AfterMethod` and data providers run outside the hook, on the context-only thread: library lookups there fall back to the context map the foundation attached, which holds the same registrations as the scope (see <1>), while a direct `PerApplicationScope` or `*ScopeManager` read throws `MissingPerApplicationScopeException`. A pool started there without a `perApplicationScope` finds no scope to adopt and records metrics through whatever binding its threads inherit; metrics never fail, so without a usable registry they are dropped silently.
 
 [[the-style-tools]]
 == The Style Tools

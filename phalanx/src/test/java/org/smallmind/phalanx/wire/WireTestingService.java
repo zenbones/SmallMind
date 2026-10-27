@@ -39,6 +39,8 @@ public interface WireTestingService {
 
   boolean hasContext ();
 
+  boolean hasScope ();
+
   @ExpectedContexts(UnknownContext.class)
   void requiresContext ();
 

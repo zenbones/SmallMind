@@ -32,18 +32,49 @@
  */
 package org.smallmind.web.json.scaffold.util;
 
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * Covers {@link PolymorphicAttributeManager}, which stores the global polymorphic discriminator
- * attribute name in a {@link PerApplicationContext}. A fresh context is attached per method because
- * the manager resolves its value through the per-application data registry.
+ * Exercises the bridge semantics of {@link PolymorphicAttributeManager}.
  */
 @Test(groups = "unit")
 public class PolymorphicAttributeManagerTest {
+
+  // The test thread carries an inherited PerApplicationContext shared with every other test on it, so the scope-only
+  // and unbound cases can only be observed on a thread that does not inherit it.
+  private static <T> T onIsolatedThread (Callable<T> body)
+    throws Exception {
+
+    AtomicReference<T> result = new AtomicReference<>();
+    AtomicReference<Throwable> failure = new AtomicReference<>();
+    Thread thread = Thread.ofPlatform().name("isolated-probe").daemon(false).inheritInheritableThreadLocals(false).unstarted(() -> {
+      try {
+        result.set(body.call());
+      } catch (Throwable throwable) {
+        failure.set(throwable);
+      }
+    });
+
+    thread.start();
+    thread.join();
+
+    if (failure.get() != null) {
+      if (failure.get() instanceof Exception) {
+        throw (Exception)failure.get();
+      }
+      throw new RuntimeException(failure.get());
+    }
+
+    return result.get();
+  }
 
   @BeforeMethod
   public void beforeMethod () {
@@ -51,15 +82,55 @@ public class PolymorphicAttributeManagerTest {
     new PerApplicationContext();
   }
 
-  public void testDefaultAttributeNameIsPresent () {
+  @AfterMethod
+  public void afterMethod () {
 
-    Assert.assertNotNull(PolymorphicAttributeManager.getPolymorphicAttributeName());
+    PolymorphicAttributeContextManager.setPolymorphicAttributeName(AttributedPolymorphicXmlAdapter.getDefaultPolymorphicAttributeName());
   }
 
-  public void testSetAndGetRoundTrip () {
+  public void testSetWithBothBoundWritesBothRegistries () {
 
-    PolymorphicAttributeManager.setPolymorphicAttributeName("@kind");
+    PerApplicationScope scope = new PerApplicationScope();
 
-    Assert.assertEquals(PolymorphicAttributeManager.getPolymorphicAttributeName(), "@kind");
+    scope.run(() -> PolymorphicAttributeManager.setPolymorphicAttributeName("@kind"));
+
+    Assert.assertEquals(scope.call(PolymorphicAttributeScopeManager::getPolymorphicAttributeName), "@kind");
+    Assert.assertEquals(PolymorphicAttributeContextManager.getPolymorphicAttributeName(), "@kind");
+  }
+
+  public void testLookupFallsBackToTheContextWhenTheScopeHoldsNothing () {
+
+    PerApplicationScope scope = new PerApplicationScope();
+
+    PolymorphicAttributeContextManager.setPolymorphicAttributeName("@kind");
+
+    Assert.assertEquals(scope.call(PolymorphicAttributeManager::getPolymorphicAttributeName), "@kind");
+  }
+
+  public void testLookupPrefersTheScopeWhenBothHoldAValue () {
+
+    PerApplicationScope scope = new PerApplicationScope();
+
+    scope.run(() -> PolymorphicAttributeScopeManager.setPolymorphicAttributeName("@scoped"));
+    PolymorphicAttributeContextManager.setPolymorphicAttributeName("@context");
+
+    Assert.assertEquals(scope.call(PolymorphicAttributeManager::getPolymorphicAttributeName), "@scoped");
+    Assert.assertEquals(PolymorphicAttributeManager.getPolymorphicAttributeName(), "@context");
+  }
+
+  public void testDefaultWhenNoBoundRegistryHoldsAName ()
+    throws Exception {
+
+    PerApplicationScope scope = new PerApplicationScope();
+
+    Assert.assertEquals(onIsolatedThread(() -> scope.call(PolymorphicAttributeManager::getPolymorphicAttributeName)), AttributedPolymorphicXmlAdapter.getDefaultPolymorphicAttributeName());
+    Assert.assertNull(onIsolatedThread(() -> scope.call(PolymorphicAttributeManager::findPolymorphicAttributeName)));
+  }
+
+  @Test(expectedExceptions = MissingPerApplicationContextException.class)
+  public void testUnboundThreadFailsThroughTheContextFlavor ()
+    throws Exception {
+
+    onIsolatedThread(PolymorphicAttributeManager::getPolymorphicAttributeName);
   }
 }

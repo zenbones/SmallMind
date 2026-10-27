@@ -44,6 +44,7 @@ import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.signal.WireContext;
+import org.smallmind.phalanx.wire.signal.WireScope;
 import org.smallmind.phalanx.wire.transport.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.transport.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -127,19 +128,20 @@ public class MockRequestTransport extends AbstractRequestTransport {
    * @param route     identifies the target service, method name, and version
    * @param arguments named method arguments to encode in the invocation signal
    * @param contexts  optional wire contexts forwarded with the invocation
+   * @param scopes    optional wire scopes forwarded with the invocation
    * @return the decoded result object for two-way calls, or {@code null} for
    * {@link org.smallmind.phalanx.wire.ConversationType#IN_ONLY} calls
    * @throws Throwable if signal encoding or decoding fails, or the response times out
    */
   @Override
-  public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext[] contexts, WireScope[] scopes)
     throws Throwable {
 
     MockMessage message;
     String messageId = UUID.randomUUID().toString();
     boolean inOnly = voice.getConversation().getConversationType().equals(ConversationType.IN_ONLY);
 
-    message = new MockMessage(signalCodec.encode(new InvocationSignal(inOnly, route, arguments, contexts)));
+    message = new MockMessage(signalCodec.encode(new InvocationSignal(inOnly, route, arguments, contexts, scopes)));
 
     if (!inOnly) {
       message.getProperties().setHeader(WireProperty.CALLER_ID.getKey(), callerId);

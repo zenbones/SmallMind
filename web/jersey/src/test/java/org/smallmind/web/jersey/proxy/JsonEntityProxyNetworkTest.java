@@ -43,7 +43,7 @@ import jakarta.ws.rs.Path;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.web.jersey.aop.EntityParam;
 import org.smallmind.web.jersey.aop.Envelope;

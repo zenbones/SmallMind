@@ -51,6 +51,16 @@ import org.testng.annotations.Test;
 @Test(groups = "unit")
 public class FieldUtilityTest {
 
+  private static Object readStaticField (String name)
+    throws ReflectiveOperationException {
+
+    Field field = FieldUtility.class.getDeclaredField(name);
+
+    field.setAccessible(true);
+
+    return field.get(null);
+  }
+
   public void testFieldAccessorsWalkHierarchyAndSkipStaticAndTransient ()
     throws IllegalAccessException {
 
@@ -202,16 +212,6 @@ public class FieldUtilityTest {
     accessor.set(target, 42);
 
     Assert.assertEquals(accessor.get(target), 42);
-  }
-
-  private static Object readStaticField (String name)
-    throws ReflectiveOperationException {
-
-    Field field = FieldUtility.class.getDeclaredField(name);
-
-    field.setAccessible(true);
-
-    return field.get(null);
   }
 
   public static class FixedBean {

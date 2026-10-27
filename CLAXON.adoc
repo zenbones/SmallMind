@@ -54,8 +54,10 @@ of design decisions to keep them compatible:
 . *A fail-safe façade that never crashes the caller.* `Instrument.with(...)`
   returns an `UnpluggedInstrumentation` when no registry is installed, and the
   registry substitutes a `NoOpMeter` when its `NamingStrategy` rejects a caller.
-  Application code cannot accidentally NPE or throw because metrics are
-  misconfigured or not yet wired.
+  Code that records metrics cannot accidentally NPE or throw because metrics
+  are misconfigured or not yet wired; only the install step,
+  `Instrument.register`, throws, and only on a thread with no per-application
+  binding.
 . *AOP for mechanical instrumentation.* `@Instrumented` on a method or
   constructor turns into an around-advice that resolves a `MeterBuilder` from a
   JSON string at weave time and records execution time on every invocation, with
@@ -140,9 +142,30 @@ against.
 
 | `Instrument`
 | Static façade over the registry. `Instrument.register(registry)` installs a
-  registry per application classloader via `PerApplicationContext`;
-  `Instrument.with(caller, builder, tags...)` returns a working or unplugged
-  `Instrumentation` depending on whether a registry has been installed.
+  registry per application through `ClaxonRegistryManager` (writing to the
+  `PerApplicationScope` bound on the calling thread and to the
+  `PerApplicationContext` attached to it — to both when both are present;
+  lookups read the scope first); `Instrument.with(caller, builder,
+  tags...)` returns a working or unplugged `Instrumentation` depending on
+  whether a registry has been installed.
+
+| `ClaxonRegistryContextManager`, `ClaxonRegistryScopeManager`
+| The per-application registry holders. The context flavor stores the
+  registry in `PerApplicationContext`. The scope flavor has the same
+  `register` / `getRegistry` API resolved through `PerApplicationScope`; it
+  throws `MissingPerApplicationScopeException` on a thread that is not
+  inside the scope's `run` / `call`, a carrier, or a `wrapThreadFactory`
+  thread. `Instrument` reads and writes through `ClaxonRegistryManager`,
+  which bridges them: `register` writes to every registry bound on the
+  calling thread (the scope flavor when a scope is bound, the context
+  flavor when a context is attached), and `getRegistry` reads the scope
+  flavor first, falling back to the context flavor when the scope holds
+  nothing and a context is attached. On a thread with neither bound,
+  `getRegistry` returns `null` — so `Instrument.with` hands back an
+  `UnpluggedInstrumentation` and metrics never fail the caller — while
+  `register` fails with `MissingPerApplicationContextException`.
+  Registrations made from a thread that has both are therefore visible to
+  threads that later carry only one of them.
 
 | `Instrumentation` / `WorkingInstrumentation` / `UnpluggedInstrumentation`
 | The fluent call-site API. `update(value)`, `on(executable)`, `track(object,
@@ -534,7 +557,9 @@ Quantity::
 
 Unplugged instrumentation::
     The `UnpluggedInstrumentation` returned by `Instrument.with(...)` when no
-    registry has been installed. All metric-facing methods are no-ops, but
+    registry has been installed, when the calling thread has neither a
+    `PerApplicationScope` nor a `PerApplicationContext` binding, or when
+    neither binding it has holds a registry. All metric-facing methods are no-ops, but
     `on(executable)` still runs the executable and propagates its result or
     exception. That keeps the call-site contract honest even when metrics are
     disabled.
@@ -702,7 +727,7 @@ registry API:
 
 == Quick start
 
-The smallest meaningful Claxon setup is three lines at startup, one line at
+The smallest meaningful Claxon setup is four lines at startup, one line at
 each call site, and one bound emitter.
 
 [source,java]
@@ -710,6 +735,7 @@ each call site, and one bound emitter.
 import org.smallmind.claxon.registry.ClaxonConfiguration;
 import org.smallmind.claxon.registry.ClaxonRegistry;
 import org.smallmind.claxon.emitter.message.MessageEmitter;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 
 public class Startup {
 
@@ -718,7 +744,9 @@ public class Startup {
     ClaxonRegistry registry = new ClaxonRegistry(new ClaxonConfiguration());   <1>
 
     registry.bind("console", new MessageEmitter());                            <2>
-    registry.initializeInstrumentation();                                      <3>
+
+    new PerApplicationContext();                                               <3>
+    registry.initializeInstrumentation();                                      <4>
   }
 }
 ----
@@ -727,9 +755,19 @@ public class Startup {
     `ImpliedNamingStrategy` with no prefix map.
 <2> Binds an emitter. `MessageEmitter` without a consumer prints every reading
     to `System.out`.
-<3> Installs the registry in the per-application context so that
-    `Instrument.with(...)` at a call site can find it. Skip this step and
-    every call site gets an `UnpluggedInstrumentation`.
+<3> Attaches a `PerApplicationContext` to the thread. The install on the next
+    line writes through `ClaxonRegistryManager.register`, which throws
+    `MissingPerApplicationContextException` on a thread with neither a
+    `PerApplicationContext` attached nor a `PerApplicationScope` bound, and a
+    bare `main` has neither. Running the install inside `scope.run(...)`
+    works as well, but then every `Instrument.with(...)` call site must
+    run inside that same scope, or on a thread handed it, or it gets an
+    `UnpluggedInstrumentation`. Containers that already attach a context
+    (`WebContextLoaderListener`, the Tanuki wrapper) make this line
+    unnecessary.
+<4> Installs the registry in every per-application binding on the thread so
+    that `Instrument.with(...)` at a call site can find it. Skip this step
+    and every call site gets an `UnpluggedInstrumentation`.
 
 [NOTE]
 ====
@@ -817,7 +855,12 @@ The equivalent XML form uses the factory beans:
 
 Because `ClaxonRegistryFactoryBean` calls `initializeInstrumentation()` inside
 `afterPropertiesSet`, the registry is live as soon as Spring finishes
-constructing it.
+constructing it. That install goes through `ClaxonRegistryManager.register`,
+so the thread refreshing the context must carry a binding — a
+`PerApplicationContext` attached (`WebContextLoaderListener`, the Tanuki
+wrapper, the testbench foundation) or a `PerApplicationScope` bound around
+the refresh; with neither, the refresh fails with a
+`BeanCreationException` caused by `MissingPerApplicationContextException`.
 
 == Usage examples
 
@@ -1204,9 +1247,11 @@ termination stint; if the in-flight pass does not finish within that window,
   `PullEmitter` implementations (e.g. `PrometheusEmitter`) additionally need
   to guard the pull path; the built-in Prometheus emitter uses a double-buffer
   swap plus a `synchronized emit()`.
-* `Instrument` is backed by `PerApplicationContext` — one registry per
-  application classloader. That is the right boundary for OSGi, app-server,
-  and multi-tenant deployments.
+* `Instrument` is backed by `ClaxonRegistryManager`, which registers into
+  every `PerApplicationScope` or `PerApplicationContext` bound on the
+  registering thread and resolves scope first, then context — one registry
+  per application. That is the right boundary for OSGi, app-server, and
+  multi-tenant deployments.
 
 === `@Instrumented` behavior
 
@@ -1287,7 +1332,11 @@ Registry / configuration failures::
     empty prefix map, forgotten `initializeInstrumentation()` call) shows up
     as "my metrics aren't appearing". The registry does not throw for these
     cases; callers of `Instrument.with(...)` receive an
-    `UnpluggedInstrumentation` or a `NoOpMeter` and keep running.
+    `UnpluggedInstrumentation` or a `NoOpMeter` and keep running. The one
+    install-time exception: `initializeInstrumentation()` (and so
+    `Instrument.register`) on a thread with neither a `PerApplicationContext`
+    attached nor a `PerApplicationScope` bound throws
+    `MissingPerApplicationContextException`.
 
 Emitter failures::
     Emitter implementations may throw any checked or unchecked exception
@@ -1444,10 +1493,19 @@ Readings never appear in the backend::
     Check, in order: (a) that `registry.initializeInstrumentation()` was
     called — otherwise `Instrument.with(...)` returns
     `UnpluggedInstrumentation` and every update is silently discarded; (b)
-    that the naming strategy does not return `null` for the caller class —
-    drop a breakpoint in `ImpliedNamingStrategy.from` or switch to
-    `ObviousNamingStrategy` with a permissive whitelist to confirm; (c) that
-    at least one `Emitter` is bound; (d) that the collection stint has had
+    that the recording thread carries a binding whose registry was written —
+    a thread with neither a `PerApplicationScope` nor a
+    `PerApplicationContext`, a scope the install never ran inside, or a
+    context attached after the install all make `Instrument.with(...)`
+    return `UnpluggedInstrumentation` silently; Claxon logs nothing. The
+    phalanx transports and `MockMessageRouter` (when constructed) and the
+    quorum `ComponentPool` (when started) adopt the scope bound on that
+    thread if they were given none, so their worker threads record through
+    the registry the install wrote into that scope; (c) that
+    the naming strategy does not return `null` for the caller class — drop a
+    breakpoint in `ImpliedNamingStrategy.from` or switch to
+    `ObviousNamingStrategy` with a permissive whitelist to confirm; (d) that
+    at least one `Emitter` is bound; (e) that the collection stint has had
     time to elapse since the first update.
 
 Every caller is measured into the same meter::
@@ -1492,8 +1550,9 @@ Prometheus scrape output has garbled metric names::
 
 Single-process scope::
     One `ClaxonRegistry` covers one JVM process. Cross-process rollup is the
-    backend's job. The per-application context boundary means each
-    classloader can host its own registry, but they do not share state.
+    backend's job. A registry is installed per `PerApplicationContext` /
+    `PerApplicationScope` binding, so each application sharing a JVM can
+    host its own registry, but they do not share state.
 
 Meter eviction::
     The registry evicts a meter only when an application explicitly calls

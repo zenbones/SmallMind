@@ -32,7 +32,7 @@
  */
 package org.smallmind.quorum.pool.complex;
 
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.StackTrace;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.PoolComponentSupport.InstanceFactory;

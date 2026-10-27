@@ -197,6 +197,8 @@ public class DockerApplications {
         }
       } while (!ready);
 
+      LoggerManager.getLogger(DockerApplications.class).info("Container(%s) was started...", application.getName());
+
       return createContainerResponse.getId();
     }
   }

@@ -101,14 +101,14 @@ public class JmsTransportIntegrationTest extends AbstractWireTransportContractTe
   protected ResponseTransport createResponseTransport ()
     throws Exception {
 
-    return new JmsResponseTransport(routingFactories, new MessagePolicy(), new ReconnectionPolicy(), signalCodec, "default", 1, 1, 1 << 20);
+    return new JmsResponseTransport(routingFactories, new MessagePolicy(), new ReconnectionPolicy(), signalCodec, "default", 1, 1, 1 << 20, null);
   }
 
   @Override
   protected RequestTransport createRequestTransport ()
     throws Exception {
 
-    return new JmsRequestTransport(routingFactories, new MessagePolicy(), new ReconnectionPolicy(), signalCodec, 1, 1, 1 << 20, 30L);
+    return new JmsRequestTransport(routingFactories, new MessagePolicy(), new ReconnectionPolicy(), signalCodec, 1, 1, 1 << 20, 30L, null);
   }
 
   private static class EmbeddedManagedObjectFactory implements ManagedObjectFactory {

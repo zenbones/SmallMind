@@ -34,39 +34,126 @@ package org.smallmind.nutsnbolts.spring;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException;
 import org.smallmind.nutsnbolts.property.PropertyClosure;
 import org.smallmind.nutsnbolts.property.PropertyExpander;
 import org.smallmind.nutsnbolts.property.PropertyExpanderException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.util.SystemPropertyMode;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+/**
+ * Exercises the bridge semantics of {@link SpringPropertyAccessorManager}.
+ */
 @Test(groups = "unit")
 public class SpringPropertyAccessorManagerTest {
 
-  @BeforeMethod
-  public void installPerApplicationContext () {
-
-    new PerApplicationContext();
-  }
-
-  public void testRegisterAndRetrieveRoundTrip ()
+  private static SpringPropertyAccessor accessor ()
     throws PropertyExpanderException {
 
     Map<String, Object> propertyMap = new HashMap<>();
+
     propertyMap.put("answer", "42");
 
-    PropertyExpander expander = new PropertyExpander(new PropertyClosure(), false, SystemPropertyMode.FALLBACK, false);
-    PropertyPlaceholderStringValueResolver resolver = new PropertyPlaceholderStringValueResolver(expander, propertyMap);
-    SpringPropertyAccessor accessor = new SpringPropertyAccessor(resolver);
+    return new SpringPropertyAccessor(new PropertyPlaceholderStringValueResolver(new PropertyExpander(new PropertyClosure(), false, SystemPropertyMode.FALLBACK, false), propertyMap));
+  }
 
-    SpringPropertyAccessorManager.register(accessor);
+  // The test thread carries an inherited PerApplicationContext shared with every other test on it, so the scope-only
+  // and unbound cases can only be observed on a thread that does not inherit it.
+  private static <T> T onIsolatedThread (Callable<T> body)
+    throws Exception {
 
-    SpringPropertyAccessor retrieved = SpringPropertyAccessorManager.getSpringPropertyAccessor();
+    AtomicReference<T> result = new AtomicReference<>();
+    AtomicReference<Throwable> failure = new AtomicReference<>();
+    Thread thread = Thread.ofPlatform().name("isolated-probe").daemon(false).inheritInheritableThreadLocals(false).unstarted(() -> {
+      try {
+        result.set(body.call());
+      } catch (Throwable throwable) {
+        failure.set(throwable);
+      }
+    });
 
-    Assert.assertSame(retrieved, accessor);
-    Assert.assertEquals(retrieved.asString("answer"), "42");
+    thread.start();
+    thread.join();
+
+    if (failure.get() != null) {
+      if (failure.get() instanceof Exception) {
+        throw (Exception)failure.get();
+      }
+      throw new RuntimeException(failure.get());
+    }
+
+    return result.get();
+  }
+
+  @BeforeMethod
+  public void attachApplicationContext ()
+    throws PropertyExpanderException {
+
+    new PerApplicationContext();
+    PerApplicationContext.setPerApplicationData(SpringPropertyAccessorContextManager.class, accessor());
+  }
+
+  public void testRegisterWithBothBoundWritesBothRegistries ()
+    throws PropertyExpanderException {
+
+    PerApplicationScope scope = new PerApplicationScope();
+    SpringPropertyAccessor accessor = accessor();
+
+    scope.run(() -> SpringPropertyAccessorManager.register(accessor));
+
+    Assert.assertSame(scope.call(SpringPropertyAccessorScopeManager::getSpringPropertyAccessor), accessor);
+    Assert.assertSame(SpringPropertyAccessorContextManager.getSpringPropertyAccessor(), accessor);
+  }
+
+  public void testLookupFallsBackToTheContextWhenTheScopeHoldsNothing ()
+    throws PropertyExpanderException {
+
+    PerApplicationScope scope = new PerApplicationScope();
+    SpringPropertyAccessor accessor = accessor();
+
+    SpringPropertyAccessorContextManager.register(accessor);
+
+    Assert.assertSame(scope.call(SpringPropertyAccessorManager::getSpringPropertyAccessor), accessor);
+  }
+
+  public void testLookupPrefersTheScopeWhenBothHoldAValue ()
+    throws PropertyExpanderException {
+
+    PerApplicationScope scope = new PerApplicationScope();
+    SpringPropertyAccessor scoped = accessor();
+    SpringPropertyAccessor context = accessor();
+
+    scope.run(() -> SpringPropertyAccessorScopeManager.register(scoped));
+    SpringPropertyAccessorContextManager.register(context);
+
+    Assert.assertSame(scope.call(SpringPropertyAccessorManager::getSpringPropertyAccessor), scoped);
+    Assert.assertSame(SpringPropertyAccessorManager.getSpringPropertyAccessor(), context);
+  }
+
+  public void testScopeOnlyThreadResolvesWithoutAContext ()
+    throws Exception {
+
+    PerApplicationScope scope = new PerApplicationScope();
+    SpringPropertyAccessor accessor = accessor();
+
+    Assert.assertSame(onIsolatedThread(() -> scope.call(() -> {
+      SpringPropertyAccessorManager.register(accessor);
+
+      return SpringPropertyAccessorManager.getSpringPropertyAccessor();
+    })), accessor);
+    Assert.assertNull(onIsolatedThread(() -> new PerApplicationScope().call(SpringPropertyAccessorManager::getSpringPropertyAccessor)), "nothing registered on a scope-only thread is null, not an exception");
+  }
+
+  @Test(expectedExceptions = MissingPerApplicationContextException.class)
+  public void testUnboundThreadFailsThroughTheContextFlavor ()
+    throws Exception {
+
+    onIsolatedThread(SpringPropertyAccessorManager::getSpringPropertyAccessor);
   }
 }

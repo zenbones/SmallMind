@@ -418,18 +418,21 @@ both are declared, `polymorphic` wins and `hierarchy` is ignored.
   name that no view property uses.
 --
 +
-The attribute name lives in `nutsnbolts`' `PerApplicationContext`, so
-attribute mode only works on a thread with a per-application context (in a
-web application, `PerApplicationContextFilter` provides one). Without one,
-the first use fails with `ExceptionInInitializerError` caused by
-`MissingPerApplicationContextException`. `PolymorphicAttributeManager`
-seeds `java/object` once per JVM, into the context that is current when the
-class first loads; any per-application context created after that has no
-name until the application sets one with
-`PolymorphicAttributeManager.setPolymorphicAttributeName(...)` or a
-`PolymorphicAttributeNameInitializingBean`, and writing fails with a
-`NullPointerException`. The default `useAttribute = false` mode needs none
-of this.
+The attribute name lives in `nutsnbolts`' `PerApplicationScope` or
+`PerApplicationContext`, so attribute mode only works on a thread with one
+of them bound (in a web application, `PerApplicationScopeFilter` or
+`PerApplicationContextFilter` provides one). `AttributedPolymorphicXmlAdapter`
+and `PolymorphicAttributeNameInitializingBean` go through
+`PolymorphicAttributeManager`, which bridges `PolymorphicAttributeScopeManager`
+and `PolymorphicAttributeContextManager`: `setPolymorphicAttributeName`
+writes to every registry bound on the calling thread, and
+`getPolymorphicAttributeName` reads the scope flavor first, then the
+context flavor, and returns `java/object` when neither holds a name. A
+thread with neither bound fails with `MissingPerApplicationContextException`.
+The two flavors behave alike on their own: each returns the name stored in
+its own scope or context, or `java/object` when nothing has been stored
+there, and a name set directly through one flavor is not visible through
+the other. The default `useAttribute = false` mode needs none of this.
 
 `@Hierarchy`::
     No adapter and no discriminator. The base views take a self type

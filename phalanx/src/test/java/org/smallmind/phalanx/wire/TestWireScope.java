@@ -30,20 +30,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.scope;
+package org.smallmind.phalanx.wire;
 
-/**
- * Optional callback interface for {@link Scope} implementations that need notification immediately before being bound by {@link ScopeFactory} and immediately after the bound extent has exited.
- */
-public interface LifecycleAware {
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import org.smallmind.phalanx.wire.signal.WireScope;
 
-  /**
-   * Called on the entering thread immediately before this scope is bound. If this method throws, the scope is not bound and {@link #afterExit()} is not called for it.
-   */
-  void beforeEnter ();
+@XmlRootElement(name = "test", namespace = "http://org.smallmind/phalanx/wire")
+public class TestWireScope extends WireScope {
 
-  /**
-   * Called on the entering thread after the scoped operation has completed, whether normally or by throwing.
-   */
-  void afterExit ();
+  private String message;
+
+  public TestWireScope () {
+
+  }
+
+  public TestWireScope (String message) {
+
+    this.message = message;
+  }
+
+  @XmlElement(name = "message", required = true)
+  public String getMessage () {
+
+    return message;
+  }
+
+  public void setMessage (String message) {
+
+    this.message = message;
+  }
 }

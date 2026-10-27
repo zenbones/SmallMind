@@ -48,27 +48,38 @@ public class MockResponseTransportLifecycleTest {
   public void testPlayingPausedPlayingTransitions ()
     throws Exception {
 
-    MockResponseTransport responseTransport = new MockResponseTransport(new MockMessageRouter(), new JsonSignalCodec());
+    MockMessageRouter messageRouter = new MockMessageRouter(null);
+    MockResponseTransport responseTransport = new MockResponseTransport(messageRouter, new JsonSignalCodec());
 
-    Assert.assertEquals(responseTransport.getState(), TransportState.PLAYING);
+    try {
+      Assert.assertEquals(responseTransport.getState(), TransportState.PLAYING);
 
-    responseTransport.pause();
-    Assert.assertEquals(responseTransport.getState(), TransportState.PAUSED);
+      responseTransport.pause();
+      Assert.assertEquals(responseTransport.getState(), TransportState.PAUSED);
 
-    responseTransport.play();
-    Assert.assertEquals(responseTransport.getState(), TransportState.PLAYING);
+      responseTransport.play();
+      Assert.assertEquals(responseTransport.getState(), TransportState.PLAYING);
+    } finally {
+      responseTransport.close();
+      messageRouter.close();
+    }
   }
 
   @Test
   public void testCloseIsTerminalAndPauseBecomesNoOp ()
     throws Exception {
 
-    MockResponseTransport responseTransport = new MockResponseTransport(new MockMessageRouter(), new JsonSignalCodec());
+    MockMessageRouter messageRouter = new MockMessageRouter(null);
+    MockResponseTransport responseTransport = new MockResponseTransport(messageRouter, new JsonSignalCodec());
 
-    responseTransport.close();
-    Assert.assertEquals(responseTransport.getState(), TransportState.CLOSED);
+    try {
+      responseTransport.close();
+      Assert.assertEquals(responseTransport.getState(), TransportState.CLOSED);
 
-    responseTransport.pause();
-    Assert.assertEquals(responseTransport.getState(), TransportState.CLOSED);
+      responseTransport.pause();
+      Assert.assertEquals(responseTransport.getState(), TransportState.CLOSED);
+    } finally {
+      messageRouter.close();
+    }
   }
 }

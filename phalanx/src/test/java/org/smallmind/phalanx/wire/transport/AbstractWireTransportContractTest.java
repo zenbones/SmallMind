@@ -33,7 +33,7 @@
 package org.smallmind.phalanx.wire.transport;
 
 import org.smallmind.nutsnbolts.context.ContextFactory;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.phalanx.wire.Color;
 import org.smallmind.phalanx.wire.StaticParameterExtractor;
 import org.smallmind.phalanx.wire.TestWireContext;

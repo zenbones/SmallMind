@@ -33,8 +33,9 @@ What the module owns:
   (load-balanced, directed, or broadcast), and waiting for the correlated
   `ResultSignal`;
 * reflecting the target interface to dispatch the inbound signal;
-* carrying thread-local `WireContext` values across the wire and
-  re-establishing them on the server thread;
+* carrying thread-local `WireContext` values and `ScopedValue`-bound
+  `WireScope` values across the wire and re-establishing them on the
+  server thread;
 * broker wiring for RabbitMQ, Kafka, JMS, and an in-process mock router.
 
 What stays with the caller:
@@ -62,7 +63,8 @@ What stays with the caller:
 | Run over RabbitMQ | `RabbitMQConnector`, `RabbitMQRequestTransport`, `RabbitMQResponseTransport`, `NameConfiguration`
 | Run over Kafka | `KafkaRequestTransport`, `KafkaResponseTransport`, `KafkaConnector`, `KafkaServer...`, `KafkaGroupProtocol`
 | Run over JMS (Jakarta Messaging 3.x) | `JmsRequestTransport`, `JmsResponseTransport`, `RoutingFactories`, `MessagePolicy`, `ReconnectionPolicy`
-| Flow a tenant/user/trace value through every call | Subclass `WireContext`, `@Wire(adapter = ...)`, `WireContextManager.register("handle", Cls)`, push with `ContextFactory.pushContext(...)`
+| Flow a tenant/user/trace value through every call | Subclass `WireContext`, `@Wire(adapter = ...)`, `WireContextManager.register("handle", Cls)` on a thread with a `PerApplicationContext` attached, push with `ContextFactory.pushContext(...)`
+| Flow the same kind of value with no push/pop to balance | Subclass `WireScope`, `WireScopeManager.register("handle", Cls)` inside the application's `PerApplicationScope`, bind with `ScopeFactory.callInScope(...)`
 | Convert a non-trivial domain type on the wire | `@Wire(adapter = MyAdapter.class)` on the type; extend `WireAdapter<V,B>` (`getValueType`, `marshal`, `unmarshal`)
 | Reuse the worker pool outside the wire layer | `org.smallmind.phalanx.worker.WorkManager` with `TransferringWorkQueue` or `BlockingWorkQueue`
 |===
@@ -105,6 +107,16 @@ The wire layer uses a small vocabulary that the rest of the doc depends on.
     caller, attached to every outbound invocation signal, re-pushed on the
     server thread for the duration of the dispatch, and visible to the
     service implementation via `ContextFactory.getContext`.
+
+**Wire scope**::
+    A subclass of abstract `WireScope` (which implements the nutsnbolts
+    `Scope`). Bound on the caller's thread for the extent of a
+    `ScopeFactory.callInScope` / `runInScope` operation, attached to every
+    outbound invocation signal made inside that operation, re-bound on the
+    server thread for the duration of the dispatch through
+    `ScopeFactory.callInScopes`, and visible to the service implementation
+    via `ScopeFactory.getScope`. Contexts and scopes travel side by side in
+    the same signal and are independent of each other.
 
 **Wired service**::
     The server-side wrapper around a service implementation.
@@ -256,7 +268,7 @@ Wire both sides through a shared `MockMessageRouter`:
 
 [source,java]
 ----
-MockMessageRouter router = new MockMessageRouter();
+MockMessageRouter router = new MockMessageRouter(null);   // null adopts the scope bound on this thread, if any
 JsonSignalCodec   codec  = new JsonSignalCodec();
 
 MockResponseTransport server = new MockResponseTransport(router, codec);
@@ -276,6 +288,10 @@ CalculatorService calculator = (CalculatorService)WireProxyFactory.generateProxy
 
 Integer sum = calculator.add(5, 3);              // returns 8
 calculator.logCalculation("5 + 3");              // returns immediately
+
+client.close();                                  // then the server, then the router that owns the dispatch threads
+server.close();
+router.close();
 ----
 <1> `register` returns the response transport's instance id — hold on to it
     if the client proxy will issue `@Whisper` calls targeted at this node.
@@ -378,8 +394,9 @@ public static Proxy generateProxy (
 ----
 
 A `ParameterExtractor<T>` receives the `Method`, the resolved argument map,
-and any attached `WireContext` instances; it returns a single value. Two
-typical implementations:
+and the attached `WireContext` and `WireScope` instances (either array may
+be empty, never `null`); it returns a single value. Two typical
+implementations:
 
 * `StaticParameterExtractor<>(value)` — always returns the same constant,
   suitable for fixed service groups.
@@ -447,14 +464,21 @@ listener thread, so there is no worker pool.
 
 [source,java]
 ----
-MockMessageRouter     router = new MockMessageRouter();
+MockMessageRouter     router = new MockMessageRouter(null);
 JsonSignalCodec       codec  = new JsonSignalCodec();
 MockRequestTransport  client = new MockRequestTransport(router, codec, 30);
 MockResponseTransport server = new MockResponseTransport(router, codec);
 ----
 
 The third argument to `MockRequestTransport` is the default `@InOut`
-timeout in seconds.
+timeout in seconds. The router owns the three daemon dispatch threads;
+closing the transports stops none of them, so close the transports and
+then call `router.close()`. Messages still queued are dropped; an idle
+dispatch thread stops within one 100 ms poll, one inside a dispatch
+stops when that service call returns. The shipped `mock-wire.xml`
+declares `destroy-method="close"` on the router bean and on both
+transport beans, and Spring destroys the transports, which depend on the
+router, first.
 
 === RabbitMQ
 
@@ -530,7 +554,8 @@ RabbitMQRequestTransport client = new RabbitMQRequestTransport(
     /* defaultTimeoutSeconds    */ 30L,
     /* messageTTLSeconds        */ 60,
     /* autoAcknowledge          */ true,
-    /* publisherConfirmationHandler */ null
+    /* publisherConfirmationHandler */ null,
+    /* perApplicationScope      */ scope            // <1>
 );
 
 RabbitMQResponseTransport server = new RabbitMQResponseTransport(
@@ -542,9 +567,20 @@ RabbitMQResponseTransport server = new RabbitMQResponseTransport(
     /* messageTTLSeconds        */ 60,
     /* quorumReplicationCount   */ 3,
     /* autoAcknowledge          */ true,
-    /* publisherConfirmationHandler */ null
+    /* publisherConfirmationHandler */ null,
+    /* perApplicationScope      */ scope            // <1>
 );
 ----
+<1> Trailing parameter on both RabbitMQ transport constructors, resolved
+    once by the constructor on the constructing thread: the scope to bind,
+    or `null` to adopt the scope bound on that thread. A scope that differs
+    from the one bound there fails the constructor with `ScopeException`.
+    With neither, the transport's threads run with no scope, carrying only
+    the `PerApplicationContext` each inherits: the response transport's
+    `WorkManager` workers from the constructing thread, the
+    `handleDelivery` callbacks from the RabbitMQ client's connection
+    thread chain. See <<phalanx-per-application-scope,Per-application
+    scope on transport threads>>.
 
 `clusterSize` sets how many distinct `RequestMessageRouter` (or
 `ResponseMessageRouter`) instances are created — each owns its own channel
@@ -573,7 +609,26 @@ helper beans. `RabbitMQConnectorFactoryBean` builds the connector from
 which also bounds how quickly a dead connection is noticed — and exposes
 each retry property above as an optional override. A worked assembly of
 the whole request/response pair ships at
-`org/smallmind/phalanx/wire/rabbitmq-wire.xml` on the module's classpath.
+`org/smallmind/phalanx/wire/rabbitmq-wire.xml` on the module's classpath
+(`mock-wire.xml` is its in-memory twin). Both pass `<null/>` for the
+scope — to every transport in the RabbitMQ/Kafka file, and to the
+`MockMessageRouter` in the mock file, since the mock transports take none
+— so each adopts whatever scope is bound on the thread that refreshes the
+context: under the Tanuki wrapper with its scope on
+(`spark.per.application.scope=true` in `wrapper.conf`, or
+`perApplicationScope` on the plugin), the listener's scope (see
+xref:SPARK.adoc#the-per-application-scope[the per-application scope]);
+under `PerApplicationScopeContextLoaderListener`, the one it published;
+and in a context-only application (the wrapper with its scope off, or any
+host with no scope bound on that thread) none, so the transport threads
+run with no scope. To hand in a specific instance, copy the file and
+replace `<null/>` with a `ref` — for example to
+`org.smallmind.spark.perApplicationScope`, which the wrapper registers
+while refreshing when its scope is on; with the scope off no bean exists
+under that name and the `ref` fails the refresh with Spring's
+`NoSuchBeanDefinitionException` — bearing in mind that any instance other
+than the one bound on the refreshing thread fails the refresh with
+`ScopeException`.
 
 === Kafka
 
@@ -612,6 +667,7 @@ KafkaRequestTransport client = new KafkaRequestTransport(
     /* startupGracePeriodSeconds */ 15,
     /* groupProtocol            */ KafkaGroupProtocol.CLASSIC,
     /* dynamicConsumers         */ true,
+    /* perApplicationScope      */ scope,           // <1>
     servers
 );
 
@@ -624,9 +680,19 @@ KafkaResponseTransport server = new KafkaResponseTransport(
     /* startupGracePeriodSeconds */ 15,
     /* groupProtocol            */ KafkaGroupProtocol.CLASSIC,
     /* dynamicConsumers         */ true,
+    /* perApplicationScope      */ scope,           // <1>
     servers
 );
 ----
+<1> Parameter placed before the `servers` varargs, resolved once by the
+    constructor on the constructing thread: the scope to bind, or `null`
+    to adopt the scope bound on that thread. A scope that differs from the
+    one bound there fails the constructor with `ScopeException`. With
+    neither, the transport's threads run with no scope, carrying only the
+    `PerApplicationContext` the ingester's consumer workers and the
+    `WorkManager` workers inherit from the constructing thread. See
+    <<phalanx-per-application-scope,Per-application scope on transport
+    threads>>.
 
 `groupProtocol` is the Kafka consumer group protocol applied to every worker
 consumer: `KafkaGroupProtocol.CLASSIC` (the classic client-side rebalance
@@ -744,20 +810,29 @@ JmsRequestTransport client = new JmsRequestTransport(
     /* clusterSize           */ 4,
     /* concurrencyLimit      */ 8,
     /* maximumMessageLength  */ 1 << 20,
-    /* defaultTimeoutSeconds */ 30L
+    /* defaultTimeoutSeconds */ 30L,
+    /* perApplicationScope   */ scope              // <1>
 );
 
 JmsResponseTransport server = new JmsResponseTransport(
     routingFactories, messagePolicy, reconnectionPolicy, codec,
-    InvocationWorker.class,
     /* serviceGroup           */ "default",
     /* clusterSize            */ 4,
     /* concurrencyLimit       */ 8,
     /* maximumMessageLength   */ 1 << 20,
-    /* transactedSession      */ false,
-    /* acknowledgeMode        */ JmsAcknowledgeMode.AUTO_ACKNOWLEDGE
+    /* perApplicationScope    */ scope             // <1>
 );
 ----
+<1> Trailing parameter, resolved once by the constructor on the
+    constructing thread: the scope to bind, or `null` to adopt the scope
+    bound on that thread. A scope that differs from the one bound there
+    fails the constructor with `ScopeException`. With neither, the
+    transport's threads run with no scope, carrying only the
+    `PerApplicationContext` each inherits: the response transport's
+    `WorkManager` workers from the constructing thread, the provider's
+    `onMessage` delivery threads from whatever the provider's own thread
+    chain carries. See <<phalanx-per-application-scope,Per-application
+    scope on transport threads>>.
 
 A JNDI-less Spring assembly is available via the `transport/jms/spring/`
 helper beans.
@@ -812,6 +887,17 @@ Register the handle at application startup, on both sides of the wire:
 WireContextManager.register("tenant", TenantContext.class);
 ----
 
+`WireContextManager` keeps its registry in the `PerApplicationContext`, so
+the registering thread must have one attached; otherwise `register` throws
+`MissingPerApplicationContextException`. A context is attached by
+`new PerApplicationContext()` on the startup thread, by
+`WebContextLoaderListener` in a servlet container, by the testbench
+foundation Spring assembly's `perApplicationContext` bean, or by the Tanuki
+wrapper listener — which also binds its `PerApplicationScope` when
+`spark.per.application.scope` is `true` in `wrapper.conf`, so a wrapped
+application runs with both bindings only when that scope is on (see
+xref:SPARK.adoc#the-per-application-scope[the per-application scope]).
+
 Push before calling, pop in `finally`:
 
 [source,java]
@@ -835,6 +921,114 @@ String tenantId      = tenant.getTenantId();
 `MethodInvoker` pushes the invocation's contexts before calling the
 service method and pops them immediately afterward, so nested outbound
 calls inside the same service method see the same contexts.
+
+=== Using A Scope Instead Of A Context
+
+`WireScope` is the `ScopedValue`-backed alternative to `WireContext`. The
+wire format is the same — a single-key JSON object per scope, keyed by the
+`@XmlRootElement` name or the simple class name — but the binding model is
+that of nutsnbolts `ScopeFactory`: a scope exists only for the extent of
+the operation that entered it, so there is no pop to balance and nothing
+can leak onto a pooled thread.
+
+Subclass `WireScope`:
+
+[source,java]
+----
+public class TenantScope extends WireScope {
+
+    private String tenantId;
+
+    public TenantScope () { }
+
+    public TenantScope (String tenantId) { this.tenantId = tenantId; }
+
+    public String getTenantId () { return tenantId; }
+
+    public void setTenantId (String tenantId) { this.tenantId = tenantId; }
+}
+----
+
+Register the handle on both sides of the wire, inside the application's
+`PerApplicationScope` — `WireScopeManager` stores its registry there and
+throws `MissingPerApplicationScopeException` on an unbound thread:
+
+[source,java]
+----
+applicationScope.run(() -> WireScopeManager.register("tenant", TenantScope.class));
+----
+
+In Spring, `WireScopeInitializingBean` is the twin of
+`WireContextInitializingBean`; its `afterPropertiesSet` registers the
+handle through `WireScopeManager`, so the refresh must itself run inside
+the application's scope (under `PerApplicationScopeContextLoaderListener`
+or the Tanuki wrapper with its scope on), otherwise it fails with
+`MissingPerApplicationScopeException`:
+
+[source,xml]
+----
+<bean class="org.smallmind.phalanx.wire.spring.WireScopeInitializingBean">
+  <property name="handle" value="tenant"/>
+  <property name="scopeClass" value="com.example.TenantScope"/>
+</bean>
+----
+
+Bind around the call; nothing to pop:
+
+[source,java]
+----
+ScopeFactory.runInScope(new TenantScope("customer-123"), () -> orderService.createOrder(order));
+----
+
+Read on the server side:
+
+[source,java]
+----
+TenantScope tenant = ScopeFactory.getScope(TenantScope.class);
+----
+
+`MethodInvoker` binds the invocation's scopes with
+`ScopeFactory.callInScopes` around the service method; they are unbound
+when the method returns or throws. A `WireScope` that implements
+`ScopeLifecycleAware` receives `beforeEnter` / `afterExit` on the server
+thread around that call. `null` elements in the signal's scope array are
+skipped, as they are for contexts.
+
+Scopes are bound by concrete class, so a call carries at most one scope of
+each class to the service method: when two scopes of the same class are
+bound around the call, the service sees the later one, and a service that
+relays the invocation onward forwards one per class. Scopes whose handle is
+not registered on the receiver all decode as `ProtoWireScope`, so two of
+them collapse to one in the same way. Contexts behave alike through
+`ContextFactory`: a relaying service forwards the innermost context of each
+class.
+
+The two mechanisms are independent: a call may carry contexts, scopes,
+both, or neither, and `WireContextManager` and `WireScopeManager` are
+separate registries. They are also decoded differently on the receiving
+side: with `JsonSignalCodec`, a `WireContext` element is resolved through
+`WireContextManager`, which needs a `PerApplicationContext` on the worker
+thread, and a `WireScope` element through `WireScopeManager`, which needs
+the `PerApplicationScope` the transport resolved at construction. A receiver
+whose worker threads lack the binding a received element needs fails
+inside `decode` on the worker with (or with a `DatabindException` caused
+by) `MissingPerApplicationContextException` or
+`MissingPerApplicationScopeException` — the adapters run inside Jackson
+deserialization — after the transport has already acknowledged the
+delivery — RabbitMQ acks once the
+message is handed to the worker queue, Kafka commits the offset after the
+hand-off, JMS auto-acknowledges by default. The worker logs the failure at
+ERROR and drops the message; the broker does not redeliver it. `@InOut` and
+`@Whisper` callers then fail with `TransportTimeoutException` (checked, so
+surfacing as `UndeclaredThrowableException` from a proxy method that does
+not declare it); `@InOnly` and `@Shout` messages are lost with no
+caller-side signal. The mock router's dispatch thread decodes under the
+same rules, so the mismatch reproduces without a broker.
+`JavaSerializationSignalCodec` does not run the adapters, so it needs no
+binding to decode. Both sides of a wire must therefore agree on which kinds
+they carry, and a receiver that must accept both needs both bound on its
+workers — a transport constructed with the scope on a thread that has a
+context, so the workers inherit the context and run inside the scope.
 
 [[error-propagation]]
 == Error Propagation
@@ -896,12 +1090,18 @@ the timeout fires, for request/reply voices; for fire-and-forget voices
 the method returns as soon as the signal is queued for dispatch. The
 request transport allocates no thread pool of its own.
 
-**Server side.** The RabbitMQ and Kafka response transports extend
+**Server side.** The RabbitMQ, Kafka, and JMS response transports extend
 `WorkManager<InvocationWorker, ...>`. The `concurrencyLimit` constructor
 argument sets the number of worker threads; there is no default. Workers
 drain a shared `WorkQueue` and dispatch through the
 `WireInvocationCircuit`. The mock response transport dispatches inline on
-the listener thread and has no pool.
+the listener thread and has no pool. `WorkManager` worker threads
+(`phalanx-worker-<fully qualified worker class>-<index>`) and the mock
+router's dispatch threads (`phalanx-mock-queue-talk-request`,
+`phalanx-mock-topic-whisper-request`, `phalanx-mock-topic-response`) are
+daemon threads; the Kafka transports' ingester threads
+(`phalanx-kafka-ingester-<group>-<index>`) are non-daemon, so a JVM
+holding a Kafka transport stays alive until `close()`.
 
 **Context propagation across threads.** A `WireContext` lives on the
 pushing thread's `ContextFactory` stack. On the server side
@@ -911,17 +1111,132 @@ therefore rely on `ContextFactory.getContext(...)`. Contexts do *not*
 propagate into arbitrary threads spawned from service code — spawn-and-
 propagate is the caller's responsibility.
 
-**Shutdown.** Call `close()` on each transport. The response transport
-runs `WorkManager.shutDown()` internally and each worker's `stop()`
-method is called in sequence (exceptions are logged, not re-thrown). To
+**Scope propagation across threads.** A `WireScope` is bound through
+`ScopeFactory` only for the extent of the operation that entered it, on
+the entering thread. On the server side `MethodInvoker` binds the call's
+scopes with `ScopeFactory.callInScopes` around the method, so service code
+on that thread can rely on `ScopeFactory.getScope(...)`. Threads the
+service spawns, or tasks it submits to a pool, see no scopes unless the
+work is carried explicitly with `ScopeFactory.snapshot()` or submitted
+through `ScopeFactory.wrapExecutor(...)`.
+
+**Shutdown.** Call `close()` on each transport, and on the mock router
+after its transports (its dispatch threads are the router's, not the
+transports'). The RabbitMQ, JMS and Kafka response transports run
+`WorkManager.shutDown()` internally and each worker's `stop()` method is
+called in sequence (exceptions are logged, not re-thrown); the mock
+response transport only marks itself closed. To
 drain cleanly: stop issuing requests on the client, close the request
 transport, let the response transport's workers complete in-flight work,
 then close the response transport.
 
+[[phalanx-per-application-scope]]
+=== Per-application scope on transport threads
+
+Every transport records Claxon metrics through `Instrument.with`, the
+service side deserializes `WireContext`s through `WireContextXmlAdapter`,
+and it deserializes `WireScope`s through `WireScopeXmlAdapter`, which
+resolves handles through `WireScopeManager` and so requires the
+per-application scope to be bound on the decoding thread; all of these
+resolve per-application data on whatever thread they run on. The
+threads involved inherit no `ScopedValue` binding from the thread that
+constructed the transport: `WorkManager` worker threads, the Kafka
+ingester's consumer threads, the RabbitMQ client's consumer threads (which
+call `handleDelivery`), the JMS provider's delivery threads (which call
+`onMessage`), and the mock transport's dispatch threads.
+
+Each RabbitMQ, Kafka, and JMS transport constructor therefore accepts an
+`org.smallmind.nutsnbolts.scope.PerApplicationScope` (the last parameter,
+except on the Kafka transports where it precedes the `servers` varargs),
+as does `WorkManager`. The mock transports take none: `MockMessageRouter`
+takes the scope and hands the settled result to the `MockQueue` /
+`MockTopic` it builds, whose dispatch threads run inside it. The parameter
+has no scope-less overload; each of those constructors settles the scope
+exactly once, on the constructing thread, through
+`PerApplicationScope.resolve(...)`, and every thread the owner later
+starts reads that stored result:
+
+A scope::
+    The scope is used as given. If the constructing thread is bound to a
+    different `PerApplicationScope`, the constructor fails with
+    `org.smallmind.nutsnbolts.scope.ScopeException` before any thread or
+    connection is started, because registrations made under the bound
+    scope could never be resolved through the one handed in. The same
+    instance bound, or no scope bound at all, is accepted.
+
+`null`::
+    The transport adopts the scope bound on the constructing thread, if
+    there is one. In Spring XML that is
+    `<constructor-arg><null/></constructor-arg>` at that position; under
+    `PerApplicationScopeContextLoaderListener`, or the Tanuki wrapper
+    listener with its scope on (`spark.per.application.scope`), which run
+    the context refresh inside the application's scope, a `null` therefore
+    binds the transport's threads to that same scope.
+
+Neither::
+    A `null` on a thread with no scope bound starts the transport's threads
+    with no scope. They carry only the `PerApplicationContext` each
+    inherits: `WorkManager` workers and the Kafka ingester's consumer
+    workers from the thread that constructs the transport; mock dispatch
+    threads from the thread that constructs the `MockMessageRouter`;
+    RabbitMQ `handleDelivery` callbacks from the client's connection thread
+    chain (after a reconnect, the connection manager's retry thread); JMS
+    `onMessage` delivery threads from whatever the provider's thread chain
+    carries, which is provider-dependent. Nothing is logged at start.
+
+With a scope, handed in or adopted, the owner runs each worker's whole
+body and each third-party callback inside `scope.run(...)`, so a
+`WireScope` on those threads resolves through that scope's map and the
+bridging `*Manager` lookups (Claxon's `Instrument` among them) read it
+first. `KafkaMessageIngester`, `RequestMessageRouter`,
+`ResponseMessageRouter`, `RequestListener`, and `ResponseListener` receive
+the scope their owning transport resolved and apply it without resolving
+again. The resolution is tied to the constructing thread: a transport
+constructed from a worker thread, a lazily initialized bean, or any other
+thread that carries no binding resolves `null` to no scope, whatever the
+application's startup thread was bound to. A receiver that must decode
+both `WireContext`s and `WireScope`s needs both bindings on the thread
+that constructs the transport (or the router), not only on the thread that
+refreshes the application: the scope arrives through the parameter or is
+adopted from that thread's binding, and the context must already be
+attached to the constructing thread, because the workers inherit it when
+they are created. On a thread with neither binding only the throwing
+lookups fail loudly — for example `WireContextManager`, `WireScopeManager`,
+`PoolManager`, the persistence and property-accessor bridges, every
+`register`, and the application's own `Instrument.register` /
+`ClaxonRegistryFactoryBean` install. `Instrument.with` returns an
+`UnpluggedInstrumentation` on such a thread, so the transport's workers
+drop their Claxon metrics silently; the request transports decode only
+`ResultSignal`s, which carry no contexts or scopes, so for them dropped
+metrics are the only effect. When passing a scope, pass the same instance
+the rest of the application binds (the one wired into a web server's
+`perApplicationScope` property, or registered by the Tanuki listener as
+`org.smallmind.spark.perApplicationScope` when its scope is on), or pass
+`null` on a thread bound to it. A scope created only for the transport,
+on a thread with no scope bound, holds no registrations: the bridging
+`*Manager` lookups (Claxon's `Instrument` among them) fall through to the
+inherited context, but `WireScopeManager` has no such fallback, so every
+`WireScope` the workers decode arrives as a `ProtoWireScope` and
+`ScopeFactory.getScope(TenantScope.class)` returns `null` with nothing
+logged.
+
+Metrics are recorded only when the worker's binding holds the registry. A
+registry installed only in the application's scope is invisible to workers
+started with no scope, and a registry installed only in a context is
+invisible to workers given a separate, empty scope when no context was
+inherited; in both cases `Instrument.with` returns
+`UnpluggedInstrumentation` and each reading is dropped silently, with no
+signal at start.
+
+Deliberately left unbound, because the work they run never resolves
+per-application data: the Kafka transports' producer executors (they only
+call `producer.send`) and `RabbitMQConnectionManager`'s retry thread
+(it only reconnects).
+
 == Worker Pool Primitives
 
 `org.smallmind.phalanx.worker` is a small, self-contained worker-pool
-abstraction. The RabbitMQ and Kafka response transports build on it;
+abstraction. The RabbitMQ, Kafka, and JMS response transports build on it;
 nothing in the package depends on the wire layer, so it can be reused on
 its own.
 
@@ -929,7 +1244,7 @@ its own.
 |===
 | Type | Role
 
-| `WorkManager<W, T>`       | Owns the worker pool's full lifecycle: creates workers via a `WorkerFactory`, wraps them in daemon threads, dispatches work through `execute(T)`, stops them via `shutDown()`. Concurrent `startUp`/`shutDown` calls spin-wait for the transition in flight. Claxon records acquire-worker latency.
+| `WorkManager<W, T>`       | Owns the worker pool's full lifecycle: creates workers via a `WorkerFactory`, wraps them in daemon threads, dispatches work through `execute(T)`, stops them via `shutDown()`. Concurrent `startUp`/`shutDown` calls spin-wait for the transition in flight. Claxon records acquire-worker latency. Both constructors take a `PerApplicationScope`, resolved once in the constructor through `PerApplicationScope.resolve(...)` on the constructing thread and run around each worker's body: a scope is used as given, `null` adopts the scope bound on the constructing thread, and a scope that differs from the bound one fails the constructor with `ScopeException`. With neither, the workers start with no scope, carrying only the `PerApplicationContext` inherited from the thread that calls `startUp`. The resolved scope is readable by subclasses through the protected `getPerApplicationScope()`. Individual dropped readings are not logged.
 | `Worker<T>`               | `Runnable` subclass that drains the queue and processes one item at a time.
 | `WorkerFactory<W, T>`     | Produces `Worker` instances bound to the shared queue.
 | `WorkQueue<T>`            | Handoff between producer and workers.
@@ -959,13 +1274,63 @@ Most often: the server-side return value is not `Serializable`.
 `WireInvocationCircuit` rejects non-`Serializable` results before sending
 the reply. Make the type serializable or return a serializable projection.
 
-**Wire contexts are missing on the server.**
+**Wire scopes are missing on the server, or the worker fails with
+`MissingPerApplicationScopeException`.**
 The handle must be registered on both sides with
-`WireContextManager.register("handle", Class)`; a mismatch causes the
-server to drop the context silently. Also verify the context was pushed
-before the call and popped in a `finally` block, and that the context
-class's no-arg constructor or adapter is reachable from the server
-classloader.
+`WireScopeManager.register("handle", Class)` inside the application's
+`PerApplicationScope`, and the transport's workers must run in that same
+scope — the transport was given it, or was constructed with `null` on a
+thread bound to it; an
+unregistered handle — or a handle registered in a different scope than the
+one the transport's workers run in — arrives as a `ProtoWireScope`, so
+`ScopeFactory.getScope(TenantScope.class)` returns `null` and nothing is
+logged. The server decodes scopes through `WireScopeXmlAdapter` on the
+transport's worker thread, which consults `WireScopeManager`; if that
+thread is not bound to a per-application scope — the transport was
+constructed with `null` on a thread with no scope bound — decoding fails
+with (or with a
+`DatabindException` caused by) `MissingPerApplicationScopeException`. The
+worker logs it at ERROR and drops the whole message, not just the scope; the delivery was already
+acknowledged, so the broker does not redeliver it, a request/reply caller
+times out, and a fire-and-forget message is lost. Also verify the call was
+made inside the
+`ScopeFactory.callInScope` / `runInScope` operation that bound the scope:
+a scope bound in one operation is not visible to a call made after it
+returned.
+
+**A transport constructor (or `MockMessageRouter` / `WorkManager`) throws
+`ScopeException` saying the supplied `PerApplicationScope` is not the scope
+bound on the current thread.**
+A scope was handed in on a thread already bound to a different
+`PerApplicationScope`, typically a context refresh run under the Tanuki
+wrapper listener with its scope on or
+`PerApplicationScopeContextLoaderListener` with a separately constructed
+scope wired into the constructor argument. Pass the bound instance (the
+`org.smallmind.spark.perApplicationScope` bean under Tanuki with its scope
+on, or the scope registered under that name as `TESTBENCH.adoc`
+shows), or pass `null` to adopt it (see
+<<phalanx-per-application-scope,Per-application scope on transport
+threads>>).
+
+**Wire contexts are missing on the server, or the worker fails with
+`MissingPerApplicationContextException`.**
+The handle must be registered on both sides with
+`WireContextManager.register("handle", Class)`; an unregistered handle
+arrives as a `ProtoWireContext`, so the context is absent for the service
+and nothing is logged. The server decodes contexts through
+`WireContextXmlAdapter` on the transport's worker thread, which consults
+`WireContextManager`; if that thread has no `PerApplicationContext` — the
+transport was constructed on a thread with none attached, so its workers
+inherited none — decoding fails with (or with a `DatabindException` caused
+by) `MissingPerApplicationContextException`. The worker logs it at ERROR
+and drops the whole message; the delivery was
+already acknowledged, so the broker does not redeliver it, a request/reply
+caller times out, and a fire-and-forget message is lost. Attach the context
+on the constructing thread before building the transport (see
+<<phalanx-per-application-scope,Per-application scope on transport
+threads>>). Also verify the context was pushed before the call and popped
+in a `finally` block, and that the context class's no-arg constructor or
+adapter is reachable from the server classloader.
 
 **Kafka calls hang after a topic rename or service-group change.**
 Phalanx uses `wire-*-<serviceGroup>` topic names. Renaming the group
@@ -1023,8 +1388,9 @@ No automatic retries::
 
 Compile-scope dependencies declared by the module (see `phalanx/pom.xml`):
 
-* `smallmind-nutsnbolts` — `Context`, `ContextFactory`, `SnowflakeId`, and
-  the other utility types the wire layer depends on.
+* `smallmind-nutsnbolts` — `Context`, `ContextFactory`, `Scope`,
+  `ScopeFactory`, `PerApplicationScope`, `SnowflakeId`, and the other
+  utility types the wire layer depends on.
 * `smallmind-quorum` — connection-management helpers used by the
   transports.
 * `claxon-registry` — latency and throughput metrics emitted from the
@@ -1039,7 +1405,8 @@ Compile-scope dependencies declared by the module (see `phalanx/pom.xml`):
   Jakarta API surfaces compiled against.
 * `spring-beans` — used by the Spring integration beans
   (`WireProxyFactoryBean`, `WireContextInitializingBean`,
-  `StaticParameterExtractorFactoryBean`, `RabbitMQConnectorFactoryBean`,
+  `WireScopeInitializingBean`, `StaticParameterExtractorFactoryBean`,
+  `RabbitMQConnectorFactoryBean`,
   `RabbitMQServerFactoryBean`).
 
 [NOTE]

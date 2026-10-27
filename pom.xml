@@ -77,6 +77,7 @@
     <maven.compiler.release>25</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <amqp.client.version>5.28.0</amqp.client.version>
+    <angus.mail.version>2.0.5</angus.mail.version>
     <artemis.version>2.37.0</artemis.version>
     <asm.version>9.9.1</asm.version>
     <aspectj.version>1.9.25.1</aspectj.version>
@@ -159,7 +160,6 @@
     <spring.batch.version>6.0.2</spring.batch.version>
     <spring.rabbit.version>4.0.1</spring.rabbit.version>
     <sshd.version>2.16.0</sshd.version>
-    <sun.mail.version>2.0.2</sun.mail.version>
     <sun.xml.bind.version>4.0.9</sun.xml.bind.version>
     <sun.xml.ws.version>4.0.5</sun.xml.ws.version>
     <surefire.version>3.5.3</surefire.version>
@@ -271,11 +271,6 @@
         <groupId>com.rabbitmq</groupId>
         <artifactId>amqp-client</artifactId>
         <version>${amqp.client.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.sun.mail</groupId>
-        <artifactId>jakarta.mail</artifactId>
-        <version>${sun.mail.version}</version>
       </dependency>
       <dependency>
         <groupId>com.sun.xml.bind</groupId>
@@ -586,6 +581,11 @@
         <groupId>org.cometd.java</groupId>
         <artifactId>cometd-java-client-websocket-jakarta</artifactId>
         <version>${cometd.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.angus</groupId>
+        <artifactId>angus-mail</artifactId>
+        <version>${angus.mail.version}</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>

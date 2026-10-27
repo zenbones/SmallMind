@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import javax.sql.CommonDataSource;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.spring.RuntimeBeansException;
 import org.smallmind.nutsnbolts.spring.SpringPropertyAccessor;
 import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorManager;
@@ -85,6 +86,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
   private final HashMap<String, String> poolNameMap = new HashMap<String, String>();
 
   private Map<String, DataSourceFactory<?, ?>> factoryMap;
+  private PerApplicationScope perApplicationScope;
   private String prefix;
 
   /**
@@ -95,6 +97,20 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
   public void setFactoryMap (Map<String, DataSourceFactory<?, ?>> factoryMap) {
 
     this.factoryMap = factoryMap;
+  }
+
+  /**
+   * Sets the scope every constructed component pool's own threads (deconstruction timer and, when a creation
+   * timeout is configured, the creator thread) run inside. The value is forwarded to each pool as given, and each pool
+   * resolves it once, when {@link #afterPropertiesSet()} starts it, against the scope bound on that thread.
+   *
+   * @param perApplicationScope the scope to bind, or {@code null} to adopt the scope bound on the thread that calls
+   *                            {@link #afterPropertiesSet()}; with none bound either, the threads the pools start run
+   *                            with no scope, carrying only the {@code PerApplicationContext} they inherit
+   */
+  public void setPerApplicationScope (PerApplicationScope perApplicationScope) {
+
+    this.perApplicationScope = perApplicationScope;
   }
 
   /**
@@ -132,14 +148,22 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
   /**
    * Parses property-based pool definitions, constructs pooled data sources, and starts them.
    *
-   * @throws SQLException           if a data source cannot be created
-   * @throws ComponentPoolException if startup fails
+   * @throws SQLException                                                        if a data source cannot be created
+   * @throws ComponentPoolException                                              if startup fails
+   * @throws RuntimeBeansException                                               if no {@link SpringPropertyAccessor} is registered under the per-application scope or context bound on the calling thread, a mapping names an undefined pool, or a pool definition is invalid (no connections, a single non-null context, or a missing or incomplete connection definition at some index)
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if the calling thread has neither a per-application scope nor a per-application context bound
+   * @throws org.smallmind.nutsnbolts.scope.ScopeException                        if a scope was given to this bean and a different scope is bound on the calling thread
+   * @throws NumberFormatException                                               if a connection index in a property key is not numeric
    */
   @Override
   public void afterPropertiesSet ()
     throws SQLException, ComponentPoolException {
 
-    SpringPropertyAccessor springPropertyAccessor = SpringPropertyAccessorManager.getSpringPropertyAccessor();
+    SpringPropertyAccessor springPropertyAccessor;
+
+    if ((springPropertyAccessor = SpringPropertyAccessorManager.getSpringPropertyAccessor()) == null) {
+      throw new RuntimeBeansException("No SpringPropertyAccessor is registered in the per-application scope or context bound on this thread; the PropertyPlaceholderConfigurer must be refreshed under the same binding as this bean");
+    }
 
     prefix = ((prefix == null) || prefix.isEmpty()) ? "" : prefix + ".";
 
@@ -308,7 +332,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
 
     if (postContextMap.size() == 1) {
 
-      return PooledDataSourceFactory.createPooledDataSource(poolName, factoryMap.get(poolName), validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), validityTimeoutSecondsOption.isNone() ? 2 : validityTimeoutSecondsOption.get(), complexPoolConfig, postContextMap.get(null));
+      return PooledDataSourceFactory.createPooledDataSource(poolName, factoryMap.get(poolName), validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), validityTimeoutSecondsOption.isNone() ? 2 : validityTimeoutSecondsOption.get(), complexPoolConfig, perApplicationScope, postContextMap.get(null));
     } else {
 
       ComponentPool[] componentPools = new ComponentPool[postContextMap.size()];
@@ -316,7 +340,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
       int index = 0;
 
       for (Map.Entry<String, DatabaseConnection[]> contextEntry : postContextMap.entrySet()) {
-        componentPools[index++] = PooledConnectionComponentPoolFactory.constructComponentPool(poolNameTranslator.getPoolName(contextEntry.getKey()), factoryMap.get(poolName), validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), validityTimeoutSecondsOption.isNone() ? 2 : validityTimeoutSecondsOption.get(), complexPoolConfig, contextEntry.getValue());
+        componentPools[index++] = PooledConnectionComponentPoolFactory.constructComponentPool(poolNameTranslator.getPoolName(contextEntry.getKey()), factoryMap.get(poolName), validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), validityTimeoutSecondsOption.isNone() ? 2 : validityTimeoutSecondsOption.get(), complexPoolConfig, perApplicationScope, contextEntry.getValue());
       }
 
       return new ContextualPooledDataSource(poolNameTranslator, componentPools);

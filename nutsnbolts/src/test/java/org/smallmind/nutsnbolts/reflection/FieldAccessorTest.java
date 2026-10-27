@@ -32,7 +32,6 @@
  */
 package org.smallmind.nutsnbolts.reflection;
 
-import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
@@ -44,6 +43,20 @@ import org.testng.annotations.Test;
 public class FieldAccessorTest {
 
   private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
+
+  private static Field nameField ()
+    throws NoSuchFieldException {
+
+    return Bean.class.getDeclaredField("name");
+  }
+
+  public interface Named {
+
+    default String getName () {
+
+      return "named";
+    }
+  }
 
   public void testFieldHandlesReadAndWriteTheFieldDirectly ()
     throws Exception {
@@ -174,20 +187,6 @@ public class FieldAccessorTest {
     accessor.set(target, "read directly");
 
     Assert.assertEquals(accessor.get(target), "read directly");
-  }
-
-  private static Field nameField ()
-    throws NoSuchFieldException {
-
-    return Bean.class.getDeclaredField("name");
-  }
-
-  public interface Named {
-
-    default String getName () {
-
-      return "named";
-    }
   }
 
   public static class Bean {

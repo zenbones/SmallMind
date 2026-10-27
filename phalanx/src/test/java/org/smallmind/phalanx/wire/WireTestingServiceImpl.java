@@ -34,6 +34,7 @@ package org.smallmind.phalanx.wire;
 
 import java.time.LocalDateTime;
 import org.smallmind.nutsnbolts.context.ContextFactory;
+import org.smallmind.nutsnbolts.scope.ScopeFactory;
 import org.smallmind.phalanx.wire.transport.ResponseTransport;
 import org.smallmind.phalanx.wire.transport.WiredService;
 
@@ -62,6 +63,12 @@ public class WireTestingServiceImpl implements WireTestingService, WiredService 
   public boolean hasContext () {
 
     return ContextFactory.exists(TestWireContext.class);
+  }
+
+  @Override
+  public boolean hasScope () {
+
+    return ScopeFactory.getScope(TestWireScope.class) != null;
   }
 
   @Override

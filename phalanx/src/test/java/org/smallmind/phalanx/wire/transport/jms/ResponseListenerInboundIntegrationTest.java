@@ -43,7 +43,7 @@ import org.apache.activemq.artemis.core.config.impl.ConfigurationImpl;
 import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ;
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.apache.activemq.artemis.jms.client.ActiveMQTopic;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.signal.JsonSignalCodec;
 import org.testng.Assert;
@@ -90,7 +90,7 @@ public class ResponseListenerInboundIntegrationTest {
     Topic responseTopic = new ActiveMQTopic("inbound.response.topic");
 
     connectionManager = new ConnectionManager(new FixedManagedObjectFactory(connectionFactory, responseTopic), new MessagePolicy(), new ReconnectionPolicy());
-    responseListener = new ResponseListener(null, connectionManager, responseTopic, new JsonSignalCodec(), "inbound-caller", MAXIMUM_MESSAGE_LENGTH);
+    responseListener = new ResponseListener(null, connectionManager, responseTopic, new JsonSignalCodec(), "inbound-caller", MAXIMUM_MESSAGE_LENGTH, null);
   }
 
   @AfterClass

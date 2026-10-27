@@ -35,12 +35,13 @@ package org.smallmind.phalanx.wire;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import org.smallmind.phalanx.wire.signal.WireContext;
+import org.smallmind.phalanx.wire.signal.WireScope;
 
 /**
  * Strategy for deriving a typed parameter value from an active service invocation context.
  *
  * <p>Implementations inspect the invoked method, its resolved argument map, and any attached
- * {@link WireContext} objects to produce a single value. Typical uses include extracting
+ * {@link WireContext} and {@link WireScope} objects to produce a single value. Typical uses include extracting
  * routing keys, tenant identifiers, or other cross-cutting values that the transport layer
  * requires without coupling directly to the service contract.</p>
  *
@@ -55,10 +56,12 @@ public interface ParameterExtractor<T> {
    * @param argumentMap  map of logical argument names to their resolved values; may be empty
    *                     but never {@code null}
    * @param wireContexts zero or more {@link WireContext} objects attached to the current wire
-   *                     operation that may supply additional metadata
+   *                     operation that may supply additional metadata; never {@code null}
+   * @param wireScopes   zero or more {@link WireScope} objects attached to the current wire
+   *                     operation that may supply additional metadata; never {@code null}
    * @return the extracted parameter value; may be {@code null}
    * @throws Exception if extraction fails for any reason
    */
-  T getParameter (Method method, HashMap<String, Object> argumentMap, WireContext... wireContexts)
+  T getParameter (Method method, HashMap<String, Object> argumentMap, WireContext[] wireContexts, WireScope[] wireScopes)
     throws Exception;
 }

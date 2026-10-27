@@ -30,10 +30,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.lang;
+package org.smallmind.nutsnbolts.context;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
+import org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
 /**
  * Manages application-scoped data attached to threads via an {@link InheritableThreadLocal} map,
@@ -58,6 +61,16 @@ public class PerApplicationContext {
   }
 
   /**
+   * Reports whether a per-application context is attached to the current thread.
+   *
+   * @return {@code true} if a context is attached, {@code false} otherwise
+   */
+  public static boolean isBound () {
+
+    return PER_APPLICATION_MAP_LOCAL.get() != null;
+  }
+
+  /**
    * Stores a data object under the given manager type in the current thread's per-application map.
    *
    * @param clazz the manager class used as the map key
@@ -73,6 +86,33 @@ public class PerApplicationContext {
     } else {
 
       perApplicationMap.put(clazz, data);
+    }
+  }
+
+  /**
+   * Stores a data object under the given manager type unless one is already stored there, and returns whichever
+   * object the map holds afterwards. This is the atomic form of a get-then-set, for registries that create their
+   * backing map on first use and may be written from more than one thread.
+   *
+   * @param clazz the manager class used as the map key
+   * @param data  the data object to store if the key is absent; must not be {@code null}
+   * @param <K>   the type of the data object, which every writer of the key is expected to share
+   * @return the object already stored under the key, or {@code data} if there was none; the cast to {@code K} is
+   * unchecked, so a value of another type stored under the key surfaces as a {@code ClassCastException} at the
+   * caller's assignment rather than here
+   * @throws MissingPerApplicationContextException if no per-application context has been initialized on the current thread
+   */
+  public static <K> K setPerApplicationDataIfAbsent (Class<? extends PerApplicationDataManager> clazz, K data) {
+
+    ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap;
+
+    if ((perApplicationMap = PER_APPLICATION_MAP_LOCAL.get()) == null) {
+      throw new MissingPerApplicationContextException("No per-application context has been set in this thread environment");
+    } else {
+
+      Object existing = perApplicationMap.putIfAbsent(clazz, data);
+
+      return (existing == null) ? data : (K)existing;
     }
   }
 
@@ -123,6 +163,22 @@ public class PerApplicationContext {
   }
 
   /**
+   * Wraps the given {@link Executor} so that every task handed to it runs with the per-application map attached to
+   * the submitting thread at the moment of submission. The carrier is taken inside {@code execute}, per task, so a
+   * pool whose threads were created before any context existed still carries the map of whichever attached thread
+   * submits to it. Nothing is captured when the executor is wrapped. This is the context counterpart of
+   * {@code PerApplicationScope.wrapExecutor}.
+   *
+   * @param executor the delegate executor that actually runs the tasks
+   * @return a wrapping executor that attaches the submitting thread's per-application map before each task
+   * @throws MissingPerApplicationContextException from {@code execute}, if the submitting thread has no per-application context attached
+   */
+  public static Executor wrapExecutor (Executor executor) {
+
+    return new CarrierExecutor(executor);
+  }
+
+  /**
    * Installs this instance's per-application map onto the current thread so it is available for
    * lookup and inherited by any child threads.
    */
@@ -149,6 +205,35 @@ public class PerApplicationContext {
     public void prepareThread () {
 
       PER_APPLICATION_MAP_LOCAL.set(perApplicationMap);
+    }
+  }
+
+  /**
+   * {@link Executor} decorator that captures the submitting thread's per-application context map on each
+   * {@code execute} and installs it on the thread that runs the task.
+   */
+  private static class CarrierExecutor implements Executor {
+
+    private final Executor executor;
+
+    private CarrierExecutor (Executor executor) {
+
+      this.executor = executor;
+    }
+
+    @Override
+    public void execute (Runnable runnable) {
+
+      ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap;
+
+      if ((perApplicationMap = PER_APPLICATION_MAP_LOCAL.get()) == null) {
+        throw new MissingPerApplicationContextException("No per-application context has been set in this thread environment");
+      }
+
+      executor.execute(() -> {
+        PER_APPLICATION_MAP_LOCAL.set(perApplicationMap);
+        runnable.run();
+      });
     }
   }
 

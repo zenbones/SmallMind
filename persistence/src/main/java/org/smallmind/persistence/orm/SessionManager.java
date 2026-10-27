@@ -32,39 +32,49 @@
  */
 package org.smallmind.persistence.orm;
 
-import java.util.concurrent.ConcurrentHashMap;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
-import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 
 /**
- * Application-scoped registry for {@link ProxySession} instances keyed by a session source.
+ * Registry of {@link ProxySession} instances that bridges {@link SessionScopeManager} and
+ * {@link SessionContextManager}.
+ * <p>
+ * {@code register} writes to every per-application registry bound on the calling thread: the scope flavor when a
+ * {@link PerApplicationScope} is bound, and the context flavor when a {@link PerApplicationContext} is attached, so a
+ * registration made from a thread that has both is visible to threads that later carry only one of them. Lookups read
+ * the scope flavor first and fall back to the context flavor when the scope holds nothing and a context is attached,
+ * so a thread bound to a scope that was never written still finds what was registered through the context. A thread
+ * with neither bound delegates to the context flavor and fails with {@code MissingPerApplicationContextException}.
+ * Nothing is ever written to a registry whose binding is absent.
  */
-public class SessionManager implements PerApplicationDataManager, ApplicationContextAware {
+public class SessionManager {
 
   /**
-   * Registers a proxy session for the given key.
+   * Registers a proxy session in every per-application registry bound on the current thread.
    *
-   * @param sessionSourceKey the key that identifies the session
-   * @param proxySession     the session instance
+   * @param sessionSourceKey the key that identifies the session; {@code null} registers the default unnamed source, which the transaction boundaries match only by {@code null}
+   * @param proxySession     the session to register
+   * @throws IllegalArgumentException                                            if the key is the empty string, which is reserved as the stored key of the default unnamed source
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static void register (String sessionSourceKey, ProxySession proxySession) {
 
-    ConcurrentHashMap<String, ProxySession> sessionMap;
-
-    if ((sessionMap = PerApplicationContext.getPerApplicationData(SessionManager.class, ConcurrentHashMap.class)) == null) {
-      PerApplicationContext.setPerApplicationData(SessionManager.class, sessionMap = new ConcurrentHashMap<>());
+    if (PerApplicationScope.isBound()) {
+      SessionScopeManager.register(sessionSourceKey, proxySession);
+      if (PerApplicationContext.isBound()) {
+        SessionContextManager.register(sessionSourceKey, proxySession);
+      }
+    } else {
+      SessionContextManager.register(sessionSourceKey, proxySession);
     }
-    sessionMap.put(sessionSourceKey, proxySession);
   }
 
   /**
    * Retrieves the default proxy session.
    *
-   * @return proxy session registered under the default key
-   * @throws ORMInitializationException if no default session is registered
+   * @return the default proxy session
+   * @throws ORMInitializationException                                          if no default session is registered in any bound registry
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static ProxySession getSession () {
 
@@ -72,10 +82,11 @@ public class SessionManager implements PerApplicationDataManager, ApplicationCon
   }
 
   /**
-   * Retrieves the registered proxy session for the default key.
+   * Retrieves the default proxy session.
    *
-   * @return default proxy session
-   * @throws ORMInitializationException if no session is registered
+   * @return the default proxy session
+   * @throws ORMInitializationException                                          if no default session is registered in any bound registry
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static ProxySession getDefaultSession () {
 
@@ -83,17 +94,18 @@ public class SessionManager implements PerApplicationDataManager, ApplicationCon
   }
 
   /**
-   * Retrieves a proxy session by key.
+   * Retrieves a proxy session by key, scope flavor first, then context flavor.
    *
-   * @param sessionSourceKey the key used during registration; may be {@code null} for default
+   * @param sessionSourceKey the key used during registration; may be {@code null} for the default unnamed source (the empty string, its stored key, resolves to it as well, but is refused by {@code register})
    * @return the matching proxy session
-   * @throws ORMInitializationException if no session is registered for the key
+   * @throws ORMInitializationException                                          if no session is registered for the key in any bound registry
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static ProxySession getSession (String sessionSourceKey) {
 
     ProxySession proxySession;
 
-    if ((proxySession = (ProxySession)PerApplicationContext.getPerApplicationData(SessionManager.class, ConcurrentHashMap.class).get(sessionSourceKey)) == null) {
+    if ((proxySession = findSession(sessionSourceKey)) == null) {
       throw new ORMInitializationException("No ProxySession was mapped to the data source value(%s)", sessionSourceKey);
     }
 
@@ -101,7 +113,36 @@ public class SessionManager implements PerApplicationDataManager, ApplicationCon
   }
 
   /**
+   * Looks up a proxy session by key, scope flavor first, then context flavor, without failing when none is registered.
+   *
+   * @param sessionSourceKey the key used during registration; may be {@code null} for the default unnamed source (the empty string, its stored key, resolves to it as well, but is refused by {@code register})
+   * @return the matching proxy session, or {@code null} if none is registered for the key in any bound registry
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the current thread; only an unregistered key yields {@code null}
+   */
+  public static ProxySession findSession (String sessionSourceKey) {
+
+    if (PerApplicationScope.isBound()) {
+
+      ProxySession proxySession;
+
+      if ((proxySession = SessionScopeManager.findSession(sessionSourceKey)) != null) {
+
+        return proxySession;
+      }
+      if (!PerApplicationContext.isBound()) {
+
+        return null;
+      }
+    }
+
+    return SessionContextManager.findSession(sessionSourceKey);
+  }
+
+  /**
    * Closes the default proxy session.
+   *
+   * @throws ORMInitializationException                                          if no default session is registered in any bound registry
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static void closeSession () {
 
@@ -109,25 +150,14 @@ public class SessionManager implements PerApplicationDataManager, ApplicationCon
   }
 
   /**
-   * Closes the session registered for the provided key.
+   * Closes the proxy session registered under the given key.
    *
-   * @param sessionSourceKey the key identifying the session to close; may be {@code null} for default
+   * @param sessionSourceKey the key used during registration; may be {@code null} for the default unnamed source (the empty string, its stored key, resolves to it as well, but is refused by {@code register})
+   * @throws ORMInitializationException                                          if no session is registered for the key in any bound registry
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static void closeSession (String sessionSourceKey) {
 
     getSession(sessionSourceKey).close();
-  }
-
-  /**
-   * Initializes the per-application session map when the Spring context is set.
-   *
-   * @param applicationContext the Spring context
-   * @throws BeansException if initialization fails
-   */
-  @Override
-  public void setApplicationContext (ApplicationContext applicationContext)
-    throws BeansException {
-
-    PerApplicationContext.setPerApplicationData(SessionManager.class, new ConcurrentHashMap<String, ProxySession>());
   }
 }

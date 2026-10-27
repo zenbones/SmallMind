@@ -33,17 +33,20 @@
 package org.smallmind.nutsnbolts.scope;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
 /**
  * Owns a per-application map of data objects, keyed by {@link PerApplicationDataManager} implementation class, and binds that map to the current thread with a {@link ScopedValue} for the dynamic extent of an operation.
  * <p>
- * The map itself is mutable and shared: data stored during one {@link #run} or {@link #call} is visible in every later or concurrent entry on the same instance and to every {@link ApplicationCarrier} taken from it. Only the binding is scoped. Constructing an instance binds nothing; unlike {@code org.smallmind.nutsnbolts.lang.PerApplicationContext}, there is no way to install the map on a thread and leave it there, and threads started from inside a bound operation do not inherit the binding. Use {@link #generateCarrier()} or {@link #wrapThreadFactory(ThreadFactory)} to carry the binding onto other threads explicitly.
+ * The map itself is mutable and shared: data stored during one {@link #run} or {@link #call} is visible in every later or concurrent entry on the same instance and to every {@link ApplicationCarrier} taken from it. Only the binding is scoped. Constructing an instance binds nothing; unlike {@code org.smallmind.nutsnbolts.context.PerApplicationContext}, there is no way to install the map on a thread and leave it there, and threads started from inside a bound operation do not inherit the binding. Use {@link #generateCarrier()}, {@link #wrapThreadFactory(ThreadFactory)}, or {@link #wrapExecutor(Executor)} to carry the binding onto other threads explicitly, or, when the scope instance itself is in hand, {@link #boundThreadFactory(ThreadFactory)} and {@link #boundExecutor(Executor)} to bind it directly.
+ * <p>
+ * The bound instance itself is visible through the static {@link #getBound()}, and {@link #resolve(PerApplicationScope)} applies the one rule every consumer that accepts a scope follows: a scope handed in is used, a {@code null} adopts the scope bound on the current thread, and a handed scope that differs from the bound one is rejected.
  */
 public class PerApplicationScope {
 
-  private static final ScopedValue<ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object>> PER_APPLICATION_MAP = ScopedValue.newInstance();
+  private static final ScopedValue<PerApplicationScope> PER_APPLICATION_SCOPE = ScopedValue.newInstance();
 
   private final ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap = new ConcurrentHashMap<>();
 
@@ -52,6 +55,53 @@ public class PerApplicationScope {
    */
   public PerApplicationScope () {
 
+  }
+
+  /**
+   * Reports whether a per-application scope is bound on the current thread.
+   *
+   * @return {@code true} if a scope is bound, {@code false} otherwise
+   */
+  public static boolean isBound () {
+
+    return PER_APPLICATION_SCOPE.isBound();
+  }
+
+  /**
+   * Returns the scope bound on the current thread, which is the instance whose {@link #run} / {@link #call}, or a
+   * carrier or factory taken from it, the thread is currently inside.
+   *
+   * @return the bound scope, or {@code null} if no scope is bound
+   */
+  public static PerApplicationScope getBound () {
+
+    return PER_APPLICATION_SCOPE.isBound() ? PER_APPLICATION_SCOPE.get() : null;
+  }
+
+  /**
+   * Resolves the scope a consumer should run inside, given the scope it was handed. A handed scope is returned as-is
+   * when no scope is bound on the current thread, or when the bound scope is that same instance. A handed scope that
+   * differs from the bound one is rejected, because the registrations made while the bound scope was in force could
+   * never be seen through it. A {@code null} adopts the bound scope, or resolves to {@code null} when nothing is
+   * bound, in which case the consumer runs with no scope. Call this once, from the thread that constructs or starts
+   * the consumer, and keep the result; a later thread may carry a different binding or none.
+   *
+   * @param perApplicationScope the scope handed to the consumer, or {@code null}
+   * @return the handed scope, else the bound scope, else {@code null}
+   * @throws ScopeException if a scope was handed in and a different scope is bound on the current thread
+   */
+  public static PerApplicationScope resolve (PerApplicationScope perApplicationScope) {
+
+    PerApplicationScope boundPerApplicationScope = getBound();
+
+    if (perApplicationScope == null) {
+
+      return boundPerApplicationScope;
+    } else if ((boundPerApplicationScope != null) && (boundPerApplicationScope != perApplicationScope)) {
+      throw new ScopeException("The supplied PerApplicationScope is not the scope bound on the current thread; registrations made under the bound scope could not be resolved through it");
+    }
+
+    return perApplicationScope;
   }
 
   /**
@@ -64,6 +114,26 @@ public class PerApplicationScope {
   public static void setPerApplicationData (Class<? extends PerApplicationDataManager> clazz, Object data) {
 
     requireBoundMap().put(clazz, data);
+  }
+
+  /**
+   * Stores a data object under the given manager type unless one is already stored there, and returns whichever
+   * object the map holds afterwards. This is the atomic form of a get-then-set, for registries that create their
+   * backing map on first use and may be written from more than one thread.
+   *
+   * @param clazz the manager class used as the map key
+   * @param data  the data object to store if the key is absent; must not be {@code null}
+   * @param <K>   the type of the data object, which every writer of the key is expected to share
+   * @return the object already stored under the key, or {@code data} if there was none; the cast to {@code K} is
+   * unchecked, so a value of another type stored under the key surfaces as a {@code ClassCastException} at the
+   * caller's assignment rather than here
+   * @throws MissingPerApplicationScopeException if no per-application scope is bound on the current thread
+   */
+  public static <K> K setPerApplicationDataIfAbsent (Class<? extends PerApplicationDataManager> clazz, K data) {
+
+    Object existing = requireBoundMap().putIfAbsent(clazz, data);
+
+    return (existing == null) ? data : (K)existing;
   }
 
   /**
@@ -89,7 +159,7 @@ public class PerApplicationScope {
    */
   public static ApplicationCarrier generateCarrier () {
 
-    return new ApplicationCarrier(ScopedValue.where(PER_APPLICATION_MAP, requireBoundMap()));
+    return new ApplicationCarrier(ScopedValue.where(PER_APPLICATION_SCOPE, requireBound()));
   }
 
   /**
@@ -104,13 +174,42 @@ public class PerApplicationScope {
     return new WrappingThreadFactory(generateCarrier(), threadFactory);
   }
 
-  private static ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> requireBoundMap () {
+  /**
+   * Wraps the given {@link Executor} so that every task handed to it runs with the per-application map that is bound on the submitting thread at the moment of submission. The carrier is taken inside {@code execute}, per task, so a pool built outside any binding still carries the scope of whichever bound thread submits to it. Nothing is captured when the executor is wrapped.
+   *
+   * @param executor the delegate executor that actually runs the tasks
+   * @return a wrapping executor that rebinds the submitting thread's per-application map around each task
+   * @throws MissingPerApplicationScopeException from {@code execute}, if the submitting thread has no per-application scope bound
+   */
+  public static Executor wrapExecutor (Executor executor) {
 
-    if (!PER_APPLICATION_MAP.isBound()) {
+    return new CarrierExecutor(executor);
+  }
+
+  private static PerApplicationScope requireBound () {
+
+    if (!PER_APPLICATION_SCOPE.isBound()) {
       throw new MissingPerApplicationScopeException("No per-application scope is bound in this thread environment");
     }
 
-    return PER_APPLICATION_MAP.get();
+    return PER_APPLICATION_SCOPE.get();
+  }
+
+  private static ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> requireBoundMap () {
+
+    return requireBound().perApplicationMap;
+  }
+
+  /**
+   * Reports whether this instance's map is the one bound on the current thread, as opposed to no scope or a different
+   * instance's scope.
+   *
+   * @return {@code true} if the current thread is inside this scope's {@code run} / {@code call} (or a carrier or
+   * factory taken from it), {@code false} otherwise
+   */
+  public boolean isBoundOnCurrentThread () {
+
+    return PER_APPLICATION_SCOPE.isBound() && (PER_APPLICATION_SCOPE.get() == this);
   }
 
   /**
@@ -120,7 +219,7 @@ public class PerApplicationScope {
    */
   public void run (Runnable runnable) {
 
-    ScopedValue.where(PER_APPLICATION_MAP, perApplicationMap).run(runnable);
+    ScopedValue.where(PER_APPLICATION_SCOPE, this).run(runnable);
   }
 
   /**
@@ -135,7 +234,29 @@ public class PerApplicationScope {
   public <T, X extends Throwable> T call (ScopedValue.CallableOp<? extends T, X> op)
     throws X {
 
-    return ScopedValue.where(PER_APPLICATION_MAP, perApplicationMap).call(op);
+    return ScopedValue.where(PER_APPLICATION_SCOPE, this).call(op);
+  }
+
+  /**
+   * Wraps the given {@link ThreadFactory} so that every thread it creates runs its entire body with this scope's per-application map bound. Nothing is captured from the calling thread and no binding needs to exist when this method is called, which is what distinguishes it from the static {@link #wrapThreadFactory(ThreadFactory)}.
+   *
+   * @param threadFactory the delegate factory whose threads should run inside this scope
+   * @return a wrapping factory that binds this scope on each new thread
+   */
+  public ThreadFactory boundThreadFactory (ThreadFactory threadFactory) {
+
+    return new BoundThreadFactory(this, threadFactory);
+  }
+
+  /**
+   * Wraps the given {@link Executor} so that every task handed to it runs with this scope's per-application map bound. Nothing is captured from the submitting thread and no binding needs to exist at submission, which is what distinguishes it from the static {@link #wrapExecutor(Executor)}.
+   *
+   * @param executor the delegate executor that actually runs the tasks
+   * @return a wrapping executor that binds this scope around each task
+   */
+  public Executor boundExecutor (Executor executor) {
+
+    return new BoundExecutor(this, executor);
   }
 
   /**
@@ -176,21 +297,41 @@ public class PerApplicationScope {
     }
   }
 
-  private static class WrappingThreadFactory implements ThreadFactory {
-
-    private final ApplicationCarrier applicationCarrier;
-    private final ThreadFactory threadFactory;
-
-    private WrappingThreadFactory (ApplicationCarrier applicationCarrier, ThreadFactory threadFactory) {
-
-      this.applicationCarrier = applicationCarrier;
-      this.threadFactory = threadFactory;
-    }
+  private record WrappingThreadFactory(ApplicationCarrier applicationCarrier, ThreadFactory threadFactory) implements ThreadFactory {
 
     @Override
     public Thread newThread (Runnable runnable) {
 
       return threadFactory.newThread(() -> applicationCarrier.run(runnable));
+    }
+  }
+
+  private record CarrierExecutor(Executor executor) implements Executor {
+
+    @Override
+    public void execute (Runnable runnable) {
+
+      ApplicationCarrier applicationCarrier = generateCarrier();
+
+      executor.execute(() -> applicationCarrier.run(runnable));
+    }
+  }
+
+  private record BoundThreadFactory(PerApplicationScope perApplicationScope, ThreadFactory threadFactory) implements ThreadFactory {
+
+    @Override
+    public Thread newThread (Runnable runnable) {
+
+      return threadFactory.newThread(() -> perApplicationScope.run(runnable));
+    }
+  }
+
+  private record BoundExecutor(PerApplicationScope perApplicationScope, Executor executor) implements Executor {
+
+    @Override
+    public void execute (Runnable runnable) {
+
+      executor.execute(() -> perApplicationScope.run(runnable));
     }
   }
 }

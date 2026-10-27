@@ -38,6 +38,7 @@ import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.nutsnbolts.lang.StackTrace;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.Pool;
 import org.smallmind.quorum.pool.complex.event.ComponentPoolEventListener;
@@ -61,6 +62,17 @@ import org.smallmind.quorum.pool.complex.event.LeaseTimeReportingComponentPoolEv
  * Event listeners registered via {@link #addComponentPoolEventListener} receive error and
  * lease-time notifications. Acquisition wait time is instrumented with a Claxon speedometer
  * tagged {@link ClaxonTag#WAITED}.
+ * <p>
+ * The pool starts two kinds of thread of its own — the deconstruction timer that retires idle,
+ * over-leased, or over-processed components, and (when a creation timeout is configured) a
+ * creator thread per component construction — and neither inherits a {@code ScopedValue}
+ * binding. The scope both run inside is resolved exactly once, through
+ * {@link PerApplicationScope#resolve(PerApplicationScope)}, on the thread that calls {@link #startup()}: a
+ * scope given through {@link #setPerApplicationScope} is used, and must be the scope bound on that thread
+ * if one is bound; with none given, the scope bound on that thread is adopted; with none bound either, both
+ * kinds of thread carry no scope and only the {@code PerApplicationContext} they inherit — the
+ * deconstruction timer from the {@link #startup()} caller, each creator thread from the thread whose
+ * request triggers the creation.
  *
  * @param <C> the type of component dispensed by this pool
  */
@@ -71,6 +83,7 @@ public class ComponentPool<C> extends Pool {
   private final ComponentPinManager<C> componentPinManager;
   private final String name;
   private ComplexPoolConfig complexPoolConfig = new ComplexPoolConfig();
+  private volatile PerApplicationScope perApplicationScope;
 
   /**
    * Creates a pool with the given name and factory, using default configuration.
@@ -149,6 +162,36 @@ public class ComponentPool<C> extends Pool {
   }
 
   /**
+   * Returns the scope handed to {@link #setPerApplicationScope}, which is what each {@link #startup()} resolves; it
+   * is not the resolved scope, so a pool that adopted the scope bound on its starting thread still reports
+   * {@code null} here.
+   *
+   * @return the handed per-application scope, or {@code null}
+   */
+  public PerApplicationScope getPerApplicationScope () {
+
+    return perApplicationScope;
+  }
+
+  /**
+   * Sets the scope the pool's deconstruction timer and creator threads run inside. Call it before
+   * {@link #startup()}, which resolves the handed value against the scope bound on the starting thread and keeps
+   * the result for both kinds of thread until the next {@link #shutdown()}; a call made while the pool is started
+   * is not seen until it is started again, and every start resolves the handed value afresh on its own thread.
+   *
+   * @param perApplicationScope the scope to bind, or {@code null} to adopt the scope bound on the thread that starts
+   *                            this pool; with none bound either, the threads it starts run with no scope, carrying
+   *                            only the {@code PerApplicationContext} they inherit
+   * @return this pool, for fluent chaining
+   */
+  public ComponentPool<C> setPerApplicationScope (PerApplicationScope perApplicationScope) {
+
+    this.perApplicationScope = perApplicationScope;
+
+    return this;
+  }
+
+  /**
    * Returns the acquisition stack traces of all components currently checked out by callers,
    * when existential awareness is enabled in the configuration.
    *
@@ -220,9 +263,17 @@ public class ComponentPool<C> extends Pool {
    * Starts the pool by invoking the factory lifecycle and pre-warming the component set.
    * <p>
    * Calls {@link ComponentInstanceFactory#initialize()}, then
-   * {@link ComponentPinManager#startup()}, then {@link ComponentInstanceFactory#startup()}.
+   * {@link ComponentPinManager#startup()}, then {@link ComponentInstanceFactory#startup()}. Each actual start of the
+   * pin manager (the first one, one after a shutdown, or a retry after a start whose initial fill failed — not a
+   * repeated call on a running pool, and not a retry after a failure in {@code ComponentInstanceFactory#startup()},
+   * which leaves the pin manager started) resolves the scope given through {@link #setPerApplicationScope} against
+   * the scope bound on the calling thread, exactly once, and the result is the scope the pool's own threads run
+   * inside until the next shutdown. A start after a shutdown resolves the handed value again, on its own thread, so
+   * a scope adopted at one start is not carried into the next.
    *
-   * @throws ComponentPoolException if any step in the startup sequence fails
+   * @throws ComponentPoolException                      if any step in the startup sequence fails
+   * @throws org.smallmind.nutsnbolts.scope.ScopeException if a scope was given and a different scope is bound on the
+   *                                                      starting thread
    */
   public void startup ()
     throws ComponentPoolException {

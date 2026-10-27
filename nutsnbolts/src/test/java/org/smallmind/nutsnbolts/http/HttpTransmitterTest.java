@@ -273,6 +273,9 @@ public class HttpTransmitterTest {
         exchange.body = accumulator.toString(StandardCharsets.UTF_8);
       }
 
+      // record before responding so the client cannot observe EOF ahead of the recorded exchange
+      exchanges.add(exchange);
+
       byte[] responseBytes = responseBody.getBytes(StandardCharsets.UTF_8);
 
       httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, responseBytes.length == 0 ? -1 : responseBytes.length);
@@ -282,7 +285,6 @@ public class HttpTransmitterTest {
       }
 
       httpExchange.close();
-      exchanges.add(exchange);
     }
   }
 

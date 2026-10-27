@@ -33,24 +33,56 @@
 package org.smallmind.phalanx.worker;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.nutsnbolts.scope.MissingPerApplicationScopeException;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.scope.ScopeException;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
  * Exercises the reusable worker-pool primitives: the {@link WorkManager} lifecycle guard and
- * start/dispatch path, and the differing hand-off semantics of the two {@link WorkQueue}
- * implementations ({@link BlockingWorkQueue} buffers, {@link TransferringWorkQueue} requires a
- * waiting consumer).
+ * start/dispatch path, the scope its workers run inside as settled at construction, and the differing hand-off
+ * semantics of the two {@link WorkQueue} implementations ({@link BlockingWorkQueue} buffers,
+ * {@link TransferringWorkQueue} requires a waiting consumer).
  */
 @Test(groups = "unit")
 public class WorkerPoolTest {
+
+  private static <T> T onIsolatedThread (Callable<T> body)
+    throws Exception {
+
+    AtomicReference<T> result = new AtomicReference<>();
+    AtomicReference<Throwable> failure = new AtomicReference<>();
+    Thread thread = Thread.ofPlatform().name("isolated-probe").daemon(false).inheritInheritableThreadLocals(false).unstarted(() -> {
+      try {
+        result.set(body.call());
+      } catch (Throwable throwable) {
+        failure.set(throwable);
+      }
+    });
+
+    thread.start();
+    thread.join();
+
+    if (failure.get() != null) {
+      if (failure.get() instanceof Exception) {
+        throw (Exception)failure.get();
+      }
+      throw (Error)failure.get();
+    }
+
+    return result.get();
+  }
 
   @BeforeClass
   public void beforeClass () {
@@ -64,13 +96,13 @@ public class WorkerPoolTest {
   public void testExecuteBeforeStartUpIsRejected ()
     throws Throwable {
 
-    new WorkManager<>(CollectingWorker.class, 1).execute("work");
+    new WorkManager<>(CollectingWorker.class, 1, null).execute("work");
   }
 
   @Test
   public void testConcurrencyLimitIsExposed () {
 
-    Assert.assertEquals(new WorkManager<>(CollectingWorker.class, 3).getConcurrencyLimit(), 3);
+    Assert.assertEquals(new WorkManager<>(CollectingWorker.class, 3, null).getConcurrencyLimit(), 3);
   }
 
   @Test
@@ -79,7 +111,7 @@ public class WorkerPoolTest {
 
     List<String> collected = new CopyOnWriteArrayList<>();
     CountDownLatch latch = new CountDownLatch(1);
-    WorkManager<CollectingWorker, String> manager = new WorkManager<>(CollectingWorker.class, 2);
+    WorkManager<CollectingWorker, String> manager = new WorkManager<>(CollectingWorker.class, 2, null);
 
     manager.startUp(workQueue -> new CollectingWorker(workQueue, collected, latch));
     try {
@@ -130,7 +162,7 @@ public class WorkerPoolTest {
 
     List<String> collected = new CopyOnWriteArrayList<>();
     CountDownLatch latch = new CountDownLatch(1);
-    WorkManager<CollectingWorker, String> manager = new WorkManager<>(CollectingWorker.class, 1);
+    WorkManager<CollectingWorker, String> manager = new WorkManager<>(CollectingWorker.class, 1, null);
 
     manager.startUp(workQueue -> new CollectingWorker(workQueue, collected, latch));
     try {
@@ -147,7 +179,7 @@ public class WorkerPoolTest {
   public void testShutDownWithoutStartUpIsSafe ()
     throws InterruptedException {
 
-    new WorkManager<>(CollectingWorker.class, 1).shutDown();
+    new WorkManager<>(CollectingWorker.class, 1, null).shutDown();
   }
 
   @Test
@@ -155,7 +187,7 @@ public class WorkerPoolTest {
     throws Throwable {
 
     RejectOnceWorkQueue<String> workQueue = new RejectOnceWorkQueue<>();
-    WorkManager<CollectingWorker, String> manager = new WorkManager<>(CollectingWorker.class, 1, workQueue);
+    WorkManager<CollectingWorker, String> manager = new WorkManager<>(CollectingWorker.class, 1, workQueue, null);
 
     manager.startUp(queue -> new CollectingWorker(queue, new CopyOnWriteArrayList<>(), new CountDownLatch(1)));
     try {
@@ -164,6 +196,153 @@ public class WorkerPoolTest {
       Assert.assertTrue(workQueue.getOfferCount() >= 2, "execute should have retried the rejected first offer");
     } finally {
       manager.shutDown();
+    }
+  }
+
+  // A manager given a scope runs each worker's body inside it, so data registered in that scope is visible on
+  // the worker thread even though the thread was started from an unbound test thread.
+  @Test
+  public void testWorkersRunInsideTheScopeWhenOneIsGiven ()
+    throws Throwable {
+
+    PerApplicationScope perApplicationScope = new PerApplicationScope();
+    AtomicReference<Object> seen = new AtomicReference<>();
+    CountDownLatch latch = new CountDownLatch(1);
+    WorkManager<ScopeProbingWorker, String> manager = new WorkManager<>(ScopeProbingWorker.class, 1, new TransferringWorkQueue<>(), perApplicationScope);
+
+    perApplicationScope.run(() -> PerApplicationScope.setPerApplicationData(SampleManager.class, "scoped"));
+
+    manager.startUp(workQueue -> new ScopeProbingWorker(workQueue, seen, latch));
+    try {
+      manager.execute("payload");
+
+      Assert.assertTrue(latch.await(5, TimeUnit.SECONDS), "worker did not process the submitted item in time");
+      Assert.assertEquals(seen.get(), "scoped");
+    } finally {
+      manager.shutDown();
+    }
+  }
+
+  @Test
+  public void testWorkersAreUnboundWithoutAScope ()
+    throws Throwable {
+
+    AtomicReference<Object> seen = new AtomicReference<>();
+    CountDownLatch latch = new CountDownLatch(1);
+    WorkManager<ScopeProbingWorker, String> manager = new WorkManager<>(ScopeProbingWorker.class, 1, null);
+
+    manager.startUp(workQueue -> new ScopeProbingWorker(workQueue, seen, latch));
+    try {
+      manager.execute("payload");
+
+      Assert.assertTrue(latch.await(5, TimeUnit.SECONDS), "worker did not process the submitted item in time");
+      Assert.assertTrue(seen.get() instanceof MissingPerApplicationScopeException, "expected an unbound worker, saw " + seen.get());
+    } finally {
+      manager.shutDown();
+    }
+  }
+
+  // The scope is settled once, on the constructing thread, and kept: a manager given null inside a scope adopts it,
+  // and the workers run inside that scope even though startUp happens later on a thread bound to nothing.
+  @Test
+  public void testWorkersAdoptTheScopeBoundOnTheConstructingThreadWhenGivenNone ()
+    throws Throwable {
+
+    PerApplicationScope perApplicationScope = new PerApplicationScope();
+    AtomicReference<Object> seen = new AtomicReference<>();
+    CountDownLatch latch = new CountDownLatch(1);
+    WorkManager<ScopeProbingWorker, String> manager;
+
+    perApplicationScope.run(() -> PerApplicationScope.setPerApplicationData(SampleManager.class, "adopted"));
+
+    manager = onIsolatedThread(() -> perApplicationScope.call(() -> new WorkManager<>(ScopeProbingWorker.class, 1, null)));
+
+    Assert.assertFalse(PerApplicationScope.isBound(), "the starting thread must carry no scope for the adoption to mean anything");
+
+    manager.startUp(workQueue -> new ScopeProbingWorker(workQueue, seen, latch));
+    try {
+      manager.execute("payload");
+
+      Assert.assertTrue(latch.await(5, TimeUnit.SECONDS), "worker did not process the submitted item in time");
+      Assert.assertEquals(seen.get(), "adopted");
+    } finally {
+      manager.shutDown();
+    }
+  }
+
+  @Test
+  public void testWorkersRunInsideTheScopeGivenWhenThatSameScopeIsBoundOnTheConstructingThread ()
+    throws Throwable {
+
+    PerApplicationScope perApplicationScope = new PerApplicationScope();
+    AtomicReference<Object> seen = new AtomicReference<>();
+    CountDownLatch latch = new CountDownLatch(1);
+    WorkManager<ScopeProbingWorker, String> manager;
+
+    perApplicationScope.run(() -> PerApplicationScope.setPerApplicationData(SampleManager.class, "same"));
+
+    manager = onIsolatedThread(() -> perApplicationScope.call(() -> new WorkManager<>(ScopeProbingWorker.class, 1, perApplicationScope)));
+
+    manager.startUp(workQueue -> new ScopeProbingWorker(workQueue, seen, latch));
+    try {
+      manager.execute("payload");
+
+      Assert.assertTrue(latch.await(5, TimeUnit.SECONDS), "worker did not process the submitted item in time");
+      Assert.assertEquals(seen.get(), "same");
+    } finally {
+      manager.shutDown();
+    }
+  }
+
+  // A scope handed in while a different scope is bound could never see the registrations made under the bound one,
+  // so construction fails rather than starting workers that would resolve nothing.
+  @Test(expectedExceptions = ScopeException.class)
+  public void testConstructionRejectsAScopeOtherThanTheOneBoundOnTheConstructingThread ()
+    throws Exception {
+
+    onIsolatedThread(() -> new PerApplicationScope().call(() -> new WorkManager<>(CollectingWorker.class, 1, new PerApplicationScope())));
+  }
+
+  // Both constructors settle the scope once; the three-argument form delegates to the four-argument one.
+  @Test(expectedExceptions = ScopeException.class)
+  public void testQueueConstructorRejectsAScopeOtherThanTheOneBoundOnTheConstructingThread ()
+    throws Exception {
+
+    onIsolatedThread(() -> new PerApplicationScope().call(() -> new WorkManager<>(CollectingWorker.class, 1, new TransferringWorkQueue<>(), new PerApplicationScope())));
+  }
+
+  public static class SampleManager implements PerApplicationDataManager {
+
+  }
+
+  public static class ScopeProbingWorker extends Worker<String> {
+
+    private final AtomicReference<Object> seen;
+    private final CountDownLatch latch;
+
+    public ScopeProbingWorker (WorkQueue<String> workQueue, AtomicReference<Object> seen, CountDownLatch latch) {
+
+      super(workQueue);
+
+      this.seen = seen;
+      this.latch = latch;
+    }
+
+    @Override
+    public void engageWork (String transfer) {
+
+      try {
+        seen.set(PerApplicationScope.getPerApplicationData(SampleManager.class, String.class));
+      } catch (MissingPerApplicationScopeException missingPerApplicationScopeException) {
+        seen.set(missingPerApplicationScopeException);
+      }
+
+      latch.countDown();
+    }
+
+    @Override
+    public void close () {
+
     }
   }
 

@@ -45,6 +45,8 @@ import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.scope.ScopeException;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.TransportException;
@@ -54,6 +56,7 @@ import org.smallmind.phalanx.wire.signal.InvocationSignal;
 import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
 import org.smallmind.phalanx.wire.signal.WireContext;
+import org.smallmind.phalanx.wire.signal.WireScope;
 import org.smallmind.phalanx.wire.transport.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.transport.ClaxonTag;
 import org.smallmind.phalanx.wire.transport.WireProperty;
@@ -66,6 +69,14 @@ import org.smallmind.phalanx.wire.transport.WireProperty;
  * {@link BytesMessage} objects and placed on the appropriate queue or topic.  Responses
  * arrive on a dedicated response topic, filtered by this transport's unique caller id, and
  * are decoded by a pool of {@link ResponseListener} instances.
+ *
+ * <p>A {@code WireContext} element of an invocation can only be decoded on a responding worker that carries a
+ * {@code PerApplicationContext}, and a {@code WireScope} element only on one running inside the configured
+ * scope; a worker lacking the needed binding fails the decode after the message was acknowledged under the
+ * default {@code AUTO_ACKNOWLEDGE} policy, so the invocation is dropped and logged rather than redelivered: an
+ * {@link org.smallmind.phalanx.wire.InOut} caller times out and an {@link org.smallmind.phalanx.wire.InOnly}
+ * message is lost. Under {@code CLIENT_ACKNOWLEDGE} phalanx never calls {@code acknowledge()}, so the provider
+ * may redeliver the message when the session recovers.
  */
 public class JmsRequestTransport extends AbstractRequestTransport {
 
@@ -92,14 +103,21 @@ public class JmsRequestTransport extends AbstractRequestTransport {
    * @param concurrencyLimit      number of message-handler slots per channel pool
    * @param maximumMessageLength  maximum byte length of any single response payload
    * @param defaultTimeoutSeconds default request timeout in seconds when no explicit timeout is set
+   * @param perApplicationScope   the scope to bind around every response callback, which runs on the JMS
+   *                              provider's delivery thread, or {@code null} to adopt the scope bound on the thread
+   *                              that constructs this transport; with none bound either, the callbacks run with no
+   *                              scope, carrying only whatever {@code PerApplicationContext} the provider's delivery
+   *                              thread inherited
+   * @throws ScopeException     if a scope was given and a different scope is bound on the constructing thread
    * @throws JMSException       if any JMS resource cannot be created
    * @throws TransportException if transport initialisation fails
    */
-  public JmsRequestTransport (RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int maximumMessageLength, long defaultTimeoutSeconds)
+  public JmsRequestTransport (RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int maximumMessageLength, long defaultTimeoutSeconds, PerApplicationScope perApplicationScope)
     throws JMSException, TransportException {
 
     super(defaultTimeoutSeconds);
 
+    PerApplicationScope resolvedPerApplicationScope = PerApplicationScope.resolve(perApplicationScope);
     int talkIndex = 0;
     int whisperIndex = 0;
 
@@ -131,7 +149,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
 
     responseListeners = new ResponseListener[clusterSize];
     for (int index = 0; index < responseListeners.length; index++) {
-      responseListeners[index] = new ResponseListener(this, new ConnectionManager(routingFactories.getResponseTopicFactory(), messagePolicy, reconnectionPolicy), (Topic)routingFactories.getResponseTopicFactory().getDestination(), signalCodec, callerId, maximumMessageLength);
+      responseListeners[index] = new ResponseListener(this, new ConnectionManager(routingFactories.getResponseTopicFactory(), messagePolicy, reconnectionPolicy), (Topic)routingFactories.getResponseTopicFactory().getDestination(), signalCodec, callerId, maximumMessageLength, resolvedPerApplicationScope);
     }
   }
 
@@ -155,11 +173,12 @@ public class JmsRequestTransport extends AbstractRequestTransport {
    * @param route     target service route (service name, function, version)
    * @param arguments invocation arguments keyed by parameter name
    * @param contexts  optional wire context entries to propagate with the message
+   * @param scopes    optional wire scope entries to propagate with the message
    * @return result object for request-reply conversations, or {@code null} for in-only calls
    * @throws Throwable if encoding, transmission, or result decoding fails
    */
   @Override
-  public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmit (Voice<?, ?> voice, Route route, Map<String, Object> arguments, WireContext[] contexts, WireScope[] scopes)
     throws Throwable {
 
     LinkedBlockingQueue<MessageHandler> messageQueue = voice.getMode().equals(VocalMode.TALK) ? talkQueue : whisperAndShoutQueue;
@@ -171,7 +190,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
       Message requestMessage;
       String messageId;
 
-      messageHandler.send(requestMessage = constructMessage(messageHandler, inOnly, (String)voice.getServiceGroup(), voice.getMode().equals(VocalMode.WHISPER) ? (String)voice.getInstanceId() : null, route, arguments, contexts));
+      messageHandler.send(requestMessage = constructMessage(messageHandler, inOnly, (String)voice.getServiceGroup(), voice.getMode().equals(VocalMode.WHISPER) ? (String)voice.getInstanceId() : null, route, arguments, contexts, scopes));
       messageId = requestMessage.getJMSMessageID();
 
       return Instrument.with(JmsRequestTransport.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.ACQUIRE_RESULT.getDisplay())).on(
@@ -218,10 +237,11 @@ public class JmsRequestTransport extends AbstractRequestTransport {
    * @param route          target route header value
    * @param arguments      invocation arguments to encode
    * @param contexts       wire contexts to encode
+   * @param scopes         wire scopes to encode
    * @return populated JMS {@link Message} ready to send
    * @throws Throwable if the message cannot be created or encoded
    */
-  private Message constructMessage (final MessageHandler messageHandler, final boolean inOnly, final String serviceGroup, final String instanceId, final Route route, final Map<String, Object> arguments, final WireContext... contexts)
+  private Message constructMessage (final MessageHandler messageHandler, final boolean inOnly, final String serviceGroup, final String instanceId, final Route route, final Map<String, Object> arguments, final WireContext[] contexts, final WireScope[] scopes)
     throws Throwable {
 
     return Instrument.with(JmsRequestTransport.class, MeterFactory.instance(SpeedometerBuilder::new), new Tag("event", ClaxonTag.CONSTRUCT_MESSAGE.getDisplay())).on(() -> {
@@ -230,7 +250,7 @@ public class JmsRequestTransport extends AbstractRequestTransport {
 
       requestMessage = messageHandler.createMessage();
 
-      requestMessage.writeBytes(signalCodec.encode(new InvocationSignal(inOnly, route, arguments, contexts)));
+      requestMessage.writeBytes(signalCodec.encode(new InvocationSignal(inOnly, route, arguments, contexts, scopes)));
 
       if (!inOnly) {
         requestMessage.setStringProperty(WireProperty.CALLER_ID.getKey(), callerId);

@@ -38,9 +38,12 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import org.smallmind.nutsnbolts.context.Context;
 import org.smallmind.nutsnbolts.context.ContextFactory;
+import org.smallmind.nutsnbolts.scope.Scope;
+import org.smallmind.nutsnbolts.scope.ScopeFactory;
 import org.smallmind.phalanx.wire.signal.Function;
 import org.smallmind.phalanx.wire.signal.Route;
 import org.smallmind.phalanx.wire.signal.WireContext;
+import org.smallmind.phalanx.wire.signal.WireScope;
 import org.smallmind.phalanx.wire.transport.RequestTransport;
 
 /**
@@ -50,7 +53,8 @@ import org.smallmind.phalanx.wire.transport.RequestTransport;
  * annotations on all parameters, then at invocation time it:
  * <ol>
  *   <li>Builds an argument map from the annotated parameter names.</li>
- *   <li>Collects any active {@link WireContext} instances from the current thread.</li>
+ *   <li>Collects any {@link WireContext} instances active on the current thread's {@link ContextFactory}
+ *       stack and any {@link WireScope} instances bound on the current thread through {@link ScopeFactory}.</li>
  *   <li>Selects a {@link Voice} ({@link Shouting}, {@link Whispering}, or {@link Talking})
  *       based on the method's {@link Shout}, {@link Whisper}, {@link InOnly}, or {@link InOut} annotation.</li>
  *   <li>Delegates to the transport to transmit the request and return the response.</li>
@@ -141,7 +145,7 @@ public class WireInvocationHandler implements InvocationHandler {
 
   /**
    * Handles a proxy method call by selecting the appropriate {@link Voice}, assembling the argument
-   * map and wire contexts, and delegating to the {@link RequestTransport}.
+   * map, wire contexts, and wire scopes, and delegating to the {@link RequestTransport}.
    *
    * @param proxy  the proxy instance on which the method was invoked
    * @param method the {@link Method} being called
@@ -158,10 +162,13 @@ public class WireInvocationHandler implements InvocationHandler {
 
     HashMap<String, Object> argumentMap;
     Context[] filteredContexts;
+    Scope[] filteredScopes;
     WireContext[] wireContexts;
+    WireScope[] wireScopes;
     Voice<?, ?> voice;
     String[] argumentNames;
-    int index = 0;
+    int contextIndex = 0;
+    int scopeIndex = 0;
 
     if ((argumentNames = methodMap.get(method)) == null) {
       throw new MissingInvocationException("No method(%s) available in the service interface(%s)", method.getName(), serviceInterface.getName());
@@ -171,15 +178,21 @@ public class WireInvocationHandler implements InvocationHandler {
     }
 
     argumentMap = ArgumentRectifier.induceMap(argumentNames, args);
-    filteredContexts = ContextFactory.filterContextsOn(method, WireContext.class);
 
+    filteredContexts = ContextFactory.filterContextsOn(method, WireContext.class);
     wireContexts = new WireContext[filteredContexts.length];
     for (Context filteredContext : filteredContexts) {
-      wireContexts[index++] = (WireContext)filteredContext;
+      wireContexts[contextIndex++] = (WireContext)filteredContext;
+    }
+
+    filteredScopes = ScopeFactory.filterScopesOn(method, WireScope.class);
+    wireScopes = new WireScope[filteredScopes.length];
+    for (Scope filteredScope : filteredScopes) {
+      wireScopes[scopeIndex++] = (WireScope)filteredScope;
     }
 
     if (method.getAnnotation(Shout.class) != null) {
-      voice = new Shouting(serviceGroupExtractor.getParameter(method, argumentMap, wireContexts));
+      voice = new Shouting(serviceGroupExtractor.getParameter(method, argumentMap, wireContexts, wireScopes));
     } else {
 
       Whisper whisper;
@@ -192,13 +205,13 @@ public class WireInvocationHandler implements InvocationHandler {
         Long timeoutSeconds = null;
 
         if (timeoutExtractor != null) {
-          timeoutSeconds = timeoutExtractor.getParameter(method, argumentMap, wireContexts);
+          timeoutSeconds = timeoutExtractor.getParameter(method, argumentMap, wireContexts, wireScopes);
         }
         if (timeoutSeconds == null) {
           timeoutSeconds = whisper.timeoutSeconds();
         }
 
-        voice = new Whispering(serviceGroupExtractor.getParameter(method, argumentMap, wireContexts), instanceIdExtractor.getParameter(method, argumentMap, wireContexts), timeoutSeconds);
+        voice = new Whispering(serviceGroupExtractor.getParameter(method, argumentMap, wireContexts, wireScopes), instanceIdExtractor.getParameter(method, argumentMap, wireContexts, wireScopes), timeoutSeconds);
       } else if (method.getAnnotation(InOnly.class) != null) {
         if (!method.getReturnType().equals(void.class)) {
           throw new ServiceDefinitionException("The method(%s) in service interface(%s) is marked as @InOnly but does not return 'void'", method.getName(), serviceInterface.getName());
@@ -207,23 +220,23 @@ public class WireInvocationHandler implements InvocationHandler {
           throw new ServiceDefinitionException("The method(%s) in service interface(%s) is marked as @InOnly but declares an Exception list", method.getName(), serviceInterface.getName());
         }
 
-        voice = new Talking(ONE_WAY_CONVERSATION, serviceGroupExtractor.getParameter(method, argumentMap, wireContexts));
+        voice = new Talking(ONE_WAY_CONVERSATION, serviceGroupExtractor.getParameter(method, argumentMap, wireContexts, wireScopes));
       } else {
 
         InOut inOut = method.getAnnotation(InOut.class);
         Long timeoutSeconds = null;
 
         if (timeoutExtractor != null) {
-          timeoutSeconds = timeoutExtractor.getParameter(method, argumentMap, wireContexts);
+          timeoutSeconds = timeoutExtractor.getParameter(method, argumentMap, wireContexts, wireScopes);
         }
         if ((timeoutSeconds == null) && (inOut != null)) {
           timeoutSeconds = inOut.timeoutSeconds();
         }
 
-        voice = new Talking(new TwoWayConversation(timeoutSeconds), serviceGroupExtractor.getParameter(method, argumentMap, wireContexts));
+        voice = new Talking(new TwoWayConversation(timeoutSeconds), serviceGroupExtractor.getParameter(method, argumentMap, wireContexts, wireScopes));
       }
     }
 
-    return transport.transmit(voice, new Route(version, serviceName, new Function(method)), argumentMap, wireContexts);
+    return transport.transmit(voice, new Route(version, serviceName, new Function(method)), argumentMap, wireContexts, wireScopes);
   }
 }

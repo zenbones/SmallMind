@@ -58,6 +58,7 @@ public class MockWhisperShoutTest {
 
   private MockRequestTransport requestTransport;
   private MockResponseTransport responseTransport;
+  private MockMessageRouter messageRouter;
   private WhisperShoutServiceImpl serviceImpl;
   private WhisperShoutService serviceProxy;
 
@@ -74,9 +75,9 @@ public class MockWhisperShoutTest {
   public void beforeClass ()
     throws Exception {
 
-    MockMessageRouter messageRouter = new MockMessageRouter();
     JsonSignalCodec signalCodec = new JsonSignalCodec();
 
+    messageRouter = new MockMessageRouter(null);
     responseTransport = new MockResponseTransport(messageRouter, signalCodec);
     serviceImpl = new WhisperShoutServiceImpl();
 
@@ -92,6 +93,7 @@ public class MockWhisperShoutTest {
 
     requestTransport.close();
     responseTransport.close();
+    messageRouter.close();
   }
 
   @Test

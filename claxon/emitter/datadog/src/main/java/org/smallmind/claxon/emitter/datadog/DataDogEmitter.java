@@ -66,7 +66,7 @@ public class DataDogEmitter extends PushEmitter {
    */
   public DataDogEmitter () {
 
-    this(null, "localhost", 8125, true, null);
+    this(null, "localhost", 8125, true);
   }
 
   /**

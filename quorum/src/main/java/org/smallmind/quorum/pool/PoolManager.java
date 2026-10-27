@@ -32,38 +32,62 @@
  */
 package org.smallmind.quorum.pool;
 
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
-import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 
 /**
- * Application-scoped registry that holds a single {@link Pool} instance per application context.
+ * Holder for the per-application {@link Pool} that bridges {@link PoolScopeManager} and {@link PoolContextManager}.
  * <p>
- * Delegates storage to {@link PerApplicationContext} so that the registered pool is scoped to the
- * current application rather than shared statically across the JVM. Pools register themselves via
- * {@link Pool#register()}, which calls {@link #register(Pool)} here.
+ * {@code register} writes to every per-application registry bound on the calling thread: the scope flavor when a
+ * {@link PerApplicationScope} is bound, and the context flavor when a {@link PerApplicationContext} is attached, so a
+ * registration made from a thread that has both is visible to threads that later carry only one of them. Lookups read
+ * the scope flavor first and fall back to the context flavor when the scope holds nothing and a context is attached,
+ * so a thread bound to a scope that was never written still finds what was registered through the context. A thread
+ * with neither bound delegates to the context flavor and fails with {@code MissingPerApplicationContextException}.
+ * Nothing is ever written to a registry whose binding is absent.
  */
-public class PoolManager implements PerApplicationDataManager {
+public class PoolManager {
 
   /**
-   * Stores {@code pool} in the per-application context, making it retrievable via {@link #getPool()}.
-   * <p>
-   * Any previously registered pool for the current application context is replaced.
+   * Registers the pool in every per-application registry bound on the current thread.
    *
-   * @param pool the pool instance to register; must not be {@code null}
+   * @param pool the pool to register
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static void register (Pool pool) {
 
-    PerApplicationContext.setPerApplicationData(PoolManager.class, pool);
+    if (PerApplicationScope.isBound()) {
+      PoolScopeManager.register(pool);
+      if (PerApplicationContext.isBound()) {
+        PoolContextManager.register(pool);
+      }
+    } else {
+      PoolContextManager.register(pool);
+    }
   }
 
   /**
-   * Returns the {@link Pool} that was registered for the current application context, or
-   * {@code null} if no pool has been registered.
+   * Returns the registered pool, scope flavor first, then context flavor.
    *
-   * @return the registered pool, or {@code null}
+   * @return the registered pool, or {@code null} if none has been registered in any bound registry
+   * @throws org.smallmind.nutsnbolts.lang.MissingPerApplicationContextException if neither a per-application scope nor a per-application context is bound on the calling thread
    */
   public static Pool getPool () {
 
-    return PerApplicationContext.getPerApplicationData(PoolManager.class, Pool.class);
+    if (PerApplicationScope.isBound()) {
+
+      Pool pool;
+
+      if ((pool = PoolScopeManager.getPool()) != null) {
+
+        return pool;
+      }
+      if (!PerApplicationContext.isBound()) {
+
+        return null;
+      }
+    }
+
+    return PoolContextManager.getPool();
   }
 }

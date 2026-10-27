@@ -35,7 +35,7 @@ package org.smallmind.phalanx.wire.transport.kafka;
 import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.kafka.utility.KafkaGroupProtocol;
 import org.smallmind.kafka.utility.KafkaServer;
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.context.PerApplicationContext;
 import org.smallmind.phalanx.wire.Argument;
 import org.smallmind.phalanx.wire.Shout;
 import org.smallmind.phalanx.wire.StaticParameterExtractor;
@@ -93,12 +93,12 @@ public class KafkaWhisperShoutIntegrationTest extends AbstractGroundwaterTest {
     //  Required on this thread for the transports' Claxon instrumentation (see the contract base).
     new PerApplicationContext();
 
-    responseTransport = new KafkaResponseTransport("kafka-ws-worker", "default", InvocationWorker.class, signalCodec, 1, 30, KafkaGroupProtocol.CONSUMER, true, new KafkaServer("localhost", 9094));
+    responseTransport = new KafkaResponseTransport("kafka-ws-worker", "default", InvocationWorker.class, signalCodec, 1, 30, KafkaGroupProtocol.CONSUMER, true, null, new KafkaServer("localhost", 9094));
     serviceImpl = new WhisperShoutServiceImpl();
 
     String instanceId = responseTransport.register(WhisperShoutService.class, serviceImpl);
 
-    requestTransport = new KafkaRequestTransport("kafka-ws-client", signalCodec, 1, 30L, 30, KafkaGroupProtocol.CONSUMER, true, new KafkaServer("localhost", 9094));
+    requestTransport = new KafkaRequestTransport("kafka-ws-client", signalCodec, 1, 30L, 30, KafkaGroupProtocol.CONSUMER, true, null, new KafkaServer("localhost", 9094));
     serviceProxy = (WhisperShoutService)WireProxyFactory.generateProxy(requestTransport, 1, "WhisperShoutService", WhisperShoutService.class, new StaticParameterExtractor<>("default"), new StaticParameterExtractor<>(instanceId), null);
 
     //  No warm-up is needed: both transport constructors pre-create the topics they consume and block

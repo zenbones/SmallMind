@@ -39,6 +39,8 @@ import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.scope.ScopeException;
 import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -51,6 +53,14 @@ import org.smallmind.scribe.pen.LoggerManager;
  * are recorded with Claxon.  Concurrent calls to {@code startUp} or {@code shutDown} are safe;
  * subsequent callers spin-wait until the transition in progress completes.</p>
  *
+ * <p>Worker threads inherit no {@code ScopedValue} binding from the thread that calls {@code startUp}, but they do
+ * inherit that thread's {@code PerApplicationContext}. The scope the workers run inside is settled once, through
+ * {@link PerApplicationScope#resolve(PerApplicationScope)} on the constructing thread: a manager constructed with a
+ * {@link PerApplicationScope} runs every worker's whole body inside that scope, one constructed with {@code null}
+ * adopts the scope bound on the constructing thread, and with none bound either the workers start with no scope,
+ * carrying only the inherited context. Per-application data resolved on a bound worker thread comes from the
+ * scope's map first.</p>
+ *
  * @param <W> the concrete {@link Worker} subtype managed by this instance
  * @param <T> the type of work items accepted by the underlying queue
  */
@@ -59,32 +69,55 @@ public class WorkManager<W extends Worker<T>, T> {
   private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.STOPPED);
   private final WorkQueue<T> workQueue;
   private final Class<W> workerClass;
+  private final PerApplicationScope perApplicationScope;
   private final int concurrencyLimit;
   private W[] workers;
 
   /**
    * Creates a manager that uses a {@link TransferringWorkQueue} as the default queue implementation.
    *
-   * @param workerClass      the runtime class of the worker type, used to allocate the worker array
-   * @param concurrencyLimit the maximum number of worker threads to run concurrently
+   * @param workerClass         the runtime class of the worker type, used to allocate the worker array
+   * @param concurrencyLimit    the maximum number of worker threads to run concurrently
+   * @param perApplicationScope the scope every worker thread runs inside, or {@code null} to adopt the scope bound
+   *                            on the thread that constructs this manager; with none bound either, the workers start
+   *                            with no scope, carrying only the {@code PerApplicationContext} inherited from the
+   *                            thread that calls {@code startUp}
+   * @throws ScopeException if a scope was given and a different scope is bound on the constructing thread
    */
-  public WorkManager (Class<W> workerClass, int concurrencyLimit) {
+  public WorkManager (Class<W> workerClass, int concurrencyLimit, PerApplicationScope perApplicationScope) {
 
-    this(workerClass, concurrencyLimit, new TransferringWorkQueue<>());
+    this(workerClass, concurrencyLimit, new TransferringWorkQueue<>(), perApplicationScope);
   }
 
   /**
    * Creates a manager with an explicitly supplied queue implementation.
    *
-   * @param workerClass      the runtime class of the worker type, used to allocate the worker array
-   * @param concurrencyLimit the maximum number of worker threads to run concurrently
-   * @param workQueue        the queue through which work items are handed off to workers
+   * @param workerClass         the runtime class of the worker type, used to allocate the worker array
+   * @param concurrencyLimit    the maximum number of worker threads to run concurrently
+   * @param workQueue           the queue through which work items are handed off to workers
+   * @param perApplicationScope the scope every worker thread runs inside, or {@code null} to adopt the scope bound
+   *                            on the thread that constructs this manager; with none bound either, the workers start
+   *                            with no scope, carrying only the {@code PerApplicationContext} inherited from the
+   *                            thread that calls {@code startUp}
+   * @throws ScopeException if a scope was given and a different scope is bound on the constructing thread
    */
-  public WorkManager (Class<W> workerClass, int concurrencyLimit, WorkQueue<T> workQueue) {
+  public WorkManager (Class<W> workerClass, int concurrencyLimit, WorkQueue<T> workQueue, PerApplicationScope perApplicationScope) {
 
     this.workerClass = workerClass;
     this.concurrencyLimit = concurrencyLimit;
     this.workQueue = workQueue;
+    this.perApplicationScope = PerApplicationScope.resolve(perApplicationScope);
+  }
+
+  /**
+   * Returns the scope settled at construction, which every worker thread runs inside, so a subclass can hand the
+   * same scope to the collaborators it starts alongside the workers.
+   *
+   * @return the resolved scope, or {@code null} if the workers run with no scope
+   */
+  protected PerApplicationScope getPerApplicationScope () {
+
+    return perApplicationScope;
   }
 
   /**
@@ -100,8 +133,11 @@ public class WorkManager<W extends Worker<T>, T> {
   /**
    * Starts the worker pool if it is not already started.
    *
-   * <p>Workers are created via {@code workerFactory}, wrapped in daemon threads, and started immediately.
-   * If a start is already in progress the calling thread spin-waits until it completes.</p>
+   * <p>Workers are created via {@code workerFactory}, wrapped in daemon threads named
+   * {@code phalanx-worker-<worker class name>-<index>} (the fully qualified class name, so workers of same-named
+   * classes in different transports stay apart in a thread dump), and started immediately; when the manager holds a
+   * {@link PerApplicationScope}, each thread's body is the worker run inside that scope. If a start is already in
+   * progress the calling thread spin-waits until it completes.</p>
    *
    * @param workerFactory factory used to create each worker instance
    * @throws InterruptedException if the calling thread is interrupted while spin-waiting for a concurrent start
@@ -114,8 +150,10 @@ public class WorkManager<W extends Worker<T>, T> {
       workers = (W[])Array.newInstance(workerClass, concurrencyLimit);
       for (int index = 0; index < workers.length; index++) {
 
-        Thread workerThread = new Thread(workers[index] = workerFactory.createWorker(workQueue));
+        W worker = workers[index] = workerFactory.createWorker(workQueue);
+        Thread workerThread = new Thread((perApplicationScope == null) ? worker : () -> perApplicationScope.run(worker));
 
+        workerThread.setName("phalanx-worker-" + workerClass.getName() + "-" + index);
         workerThread.setDaemon(true);
         workerThread.start();
       }

@@ -44,6 +44,7 @@ import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.meter.MeterFactory;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
+import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.signal.ResultSignal;
 import org.smallmind.phalanx.wire.signal.SignalCodec;
@@ -58,6 +59,10 @@ import org.smallmind.scribe.pen.LoggerManager;
  *
  * <p>The consumer is filtered by the caller id of the owning transport so that each
  * {@code ResponseListener} receives only the responses belonging to its transport instance.
+ *
+ * <p>{@link #onMessage} is called on the JMS provider's delivery thread, which inherits no scope; whether it
+ * carries a {@code PerApplicationContext} depends on which thread the provider created it from. A listener
+ * constructed with a {@link PerApplicationScope} runs the callback inside it.
  */
 public class ResponseListener implements SessionEmployer, MessageListener {
 
@@ -66,6 +71,7 @@ public class ResponseListener implements SessionEmployer, MessageListener {
   private final ConnectionManager responseConnectionManager;
   private final Topic responseTopic;
   private final SignalCodec signalCodec;
+  private final PerApplicationScope perApplicationScope;
   private final String selector;
   private final byte[] buffer;
 
@@ -79,15 +85,20 @@ public class ResponseListener implements SessionEmployer, MessageListener {
    * @param signalCodec               codec used to deserialise {@link ResultSignal} payloads
    * @param callerId                  unique caller id used as the JMS message-selector value
    * @param maximumMessageLength      maximum byte length of any single response payload
+   * @param perApplicationScope       the scope the owning transport resolved at construction, bound around every
+   *                                  {@code onMessage} callback, or {@code null} to run the callback with no scope,
+   *                                  carrying only whatever {@code PerApplicationContext} the provider's delivery
+   *                                  thread inherited; no resolution happens here
    * @throws JMSException if consumer creation fails
    */
-  public ResponseListener (JmsRequestTransport requestTransport, ConnectionManager responseConnectionManager, Topic responseTopic, SignalCodec signalCodec, String callerId, int maximumMessageLength)
+  public ResponseListener (JmsRequestTransport requestTransport, ConnectionManager responseConnectionManager, Topic responseTopic, SignalCodec signalCodec, String callerId, int maximumMessageLength, PerApplicationScope perApplicationScope)
     throws JMSException {
 
     this.requestTransport = requestTransport;
     this.responseConnectionManager = responseConnectionManager;
     this.responseTopic = responseTopic;
     this.signalCodec = signalCodec;
+    this.perApplicationScope = perApplicationScope;
 
     buffer = new byte[maximumMessageLength];
     selector = WireProperty.CALLER_ID.getKey() + "='" + callerId + "'";
@@ -141,6 +152,15 @@ public class ResponseListener implements SessionEmployer, MessageListener {
    */
   @Override
   public void onMessage (final Message message) {
+
+    if (perApplicationScope == null) {
+      onBoundMessage(message);
+    } else {
+      perApplicationScope.run(() -> onBoundMessage(message));
+    }
+  }
+
+  private void onBoundMessage (Message message) {
 
     try {
 
