@@ -137,6 +137,22 @@
     </dependency>
   </dependencies>
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <configuration>
+            <additionalOptions>
+              <additionalOption>--add-exports</additionalOption>
+              <additionalOption>org.glassfish.jersey.core.common/org.glassfish.jersey.innate.inject=org.smallmind.web.jersey</additionalOption>
+              <additionalOption>--add-exports</additionalOption>
+              <additionalOption>org.glassfish.jersey.ext.bean.validation/org.glassfish.jersey.server.validation.internal=org.smallmind.web.jersey</additionalOption>
+            </additionalOptions>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
