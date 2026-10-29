@@ -1242,6 +1242,7 @@ implementation speaks Kafka.
     <constructor-arg name="nodeName"                  value="app-node-1"/>  <1>
     <constructor-arg name="concurrencyLimit"          value="1"/>           <2>
     <constructor-arg name="startupGracePeriodSeconds" value="10"/>          <3>
+    <constructor-arg name="shutdownGracePeriodSeconds"><null/></constructor-arg> <9>
     <constructor-arg name="groupProtocol"             value="CLASSIC"/>     <4>
     <constructor-arg name="dynamicConsumers"          value="true"/>        <5>
     <constructor-arg name="topicName"                 value="oumuamua"/>    <6>
@@ -1263,10 +1264,7 @@ implementation speaks Kafka.
 <2> The number of background consumer workers polling Kafka on this
     node. One is enough unless inbound volume is very high.
 <3> How long the constructor will wait for the broker to become
-    reachable before giving up; `shutDown` also waits up to this long
-    for queued send tasks to hand their records to the producer, and
-    then up to this long again for the producer to flush buffered
-    records to the broker before abandoning them.
+    reachable before giving up.
 <4> The Kafka group protocol for the backbone's consumers. Use
     `CLASSIC` for brokers that do not support KIP-848; use `CONSUMER`
     for Kafka 3.7 and later with the new consumer protocol enabled.
@@ -1310,6 +1308,12 @@ implementation speaks Kafka.
     `OumuamuaServer.start` (the servlet's `init`), which creates them in
     `startUp`. The producer's executor only calls `producer.send` and is
     never wrapped.
+<9> How long `shutDown` waits for queued send tasks to hand their
+    records to the producer, and then how long again for the producer
+    to flush buffered records to the broker before abandoning them.
+    `<null/>` uses the value of `startupGracePeriodSeconds`. Like
+    `perApplicationScope`, it precedes the `servers` varargs, so wire it
+    by `name` as shown.
 
 .Omitting the scope through the same argument
 [source,xml]
@@ -1336,7 +1340,7 @@ How it works, concretely:
 * `shutDown` signals every consumer worker and wakes it via
   `KafkaConsumer.wakeup()`, then waits for each to exit, shuts down the
   send executor and waits up to
-  `startupGracePeriodSeconds` for queued send tasks to hand their
+  `shutdownGracePeriodSeconds` for queued send tasks to hand their
   records to the producer (logging a WARN if they do not), then closes
   the producer with the same bound on flushing buffered records to the
   broker. Once `shutDown` has taken the stopping transition, the executor

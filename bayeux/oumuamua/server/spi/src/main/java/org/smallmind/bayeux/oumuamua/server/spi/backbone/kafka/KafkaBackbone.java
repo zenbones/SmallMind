@@ -94,6 +94,7 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
 
   private final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
   private final ComponentModulator componentModulator = new ComponentModulator();
+  private final AtomicBoolean resourcesReleased = new AtomicBoolean(false);
   private final KafkaConnector connector;
   private final Producer<Long, byte[]> producer;
   private final KafkaGroupProtocol groupProtocol;
@@ -101,10 +102,9 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
   private final String nodeName;
   private final String topicName;
   private final String prefixedTopicName;
-  private final int startupGracePeriodSeconds;
-  private final AtomicBoolean resourcesReleased = new AtomicBoolean(false);
   private final String groupId;
   private final boolean dynamicConsumers;
+  private final Integer shutdownGracePeriodSeconds;
   private final int concurrencyLimit;
   private ConsumerWorker<V>[] workers;
 
@@ -131,12 +131,12 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
    * @throws KafkaConnectionException if no broker is reachable within the startup grace period
    * @throws ScopeException           if a scope was given and a different scope is bound on the constructing thread
    */
-  public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, KafkaGroupProtocol groupProtocol, boolean dynamicConsumers, String topicName, PerApplicationScope perApplicationScope, KafkaServer... servers)
+  public KafkaBackbone (String nodeName, int concurrencyLimit, int startupGracePeriodSeconds, Integer shutdownGracePeriodSeconds, KafkaGroupProtocol groupProtocol, boolean dynamicConsumers, String topicName, PerApplicationScope perApplicationScope, KafkaServer... servers)
     throws KafkaConnectionException {
 
     this.nodeName = nodeName;
     this.concurrencyLimit = concurrencyLimit;
-    this.startupGracePeriodSeconds = startupGracePeriodSeconds;
+    this.shutdownGracePeriodSeconds = (shutdownGracePeriodSeconds == null) ? startupGracePeriodSeconds : shutdownGracePeriodSeconds;
     this.groupProtocol = groupProtocol;
     this.dynamicConsumers = dynamicConsumers;
     this.topicName = topicName;
@@ -270,11 +270,11 @@ public class KafkaBackbone<V extends Value<V>> implements Backbone<V> {
     if (resourcesReleased.compareAndSet(false, true)) {
       executorService.shutdown();
       try {
-        if (!executorService.awaitTermination(startupGracePeriodSeconds, TimeUnit.SECONDS)) {
-          LoggerManager.getLogger(KafkaBackbone.class).warn("Kafka backbone(%s) send executor did not drain within %d seconds; queued publishes were abandoned", prefixedTopicName, startupGracePeriodSeconds);
+        if (!executorService.awaitTermination(shutdownGracePeriodSeconds, TimeUnit.SECONDS)) {
+          LoggerManager.getLogger(KafkaBackbone.class).warn("Kafka backbone(%s) send executor did not drain within %d seconds; queued publishes were abandoned", prefixedTopicName, shutdownGracePeriodSeconds);
         }
       } finally {
-        producer.close(Duration.ofSeconds(startupGracePeriodSeconds));
+        producer.close(Duration.ofSeconds(shutdownGracePeriodSeconds));
       }
     }
   }

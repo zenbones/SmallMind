@@ -169,7 +169,7 @@ public class KafkaBackboneTest {
   private KafkaBackbone<OrthodoxValue> createBackbone (int concurrencyLimit, PerApplicationScope perApplicationScope)
     throws Exception {
 
-    return new KafkaBackbone<>(NODE_NAME, concurrencyLimit, 5, KafkaGroupProtocol.CLASSIC, true, TOPIC, perApplicationScope, new KafkaServer("localhost", 9094));
+    return new KafkaBackbone<>(NODE_NAME, concurrencyLimit, 5, null, KafkaGroupProtocol.CLASSIC, true, TOPIC, perApplicationScope, new KafkaServer("localhost", 9094));
   }
 
   private Packet<OrthodoxValue> makePacket ()
@@ -205,6 +205,7 @@ public class KafkaBackboneTest {
       "isolated-test-node",
       1,
       SHORT_GRACE_PERIOD_SECONDS,
+      null,
       KafkaGroupProtocol.CLASSIC,
       true,
       "unit-test-topic",
