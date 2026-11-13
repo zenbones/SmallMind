@@ -60,4 +60,28 @@ public class AsymmetricKeyGeneratorTest {
     Assert.assertTrue(output.contains("-----BEGIN PRIVATE KEY-----"), "Expected PKCS8 PEM block");
     Assert.assertTrue(output.contains("-----END PRIVATE KEY-----"));
   }
+
+  public void testOpenSSHPublicKeyPrefixMatchesKeyTypeForEC ()
+    throws Exception {
+
+    String line = AsymmetricKeySpec.OPENSSH.fromKey(EncryptionUtility.generateKeyPair(AsymmetricAlgorithm.EC).getPublic());
+
+    Assert.assertTrue(line.startsWith("ecdsa-sha2-nistp384 "), "Expected ECDSA prefix; got: " + line.substring(0, Math.min(40, line.length())));
+  }
+
+  public void testOpenSSHPublicKeyPrefixMatchesKeyTypeForEd25519 ()
+    throws Exception {
+
+    String line = AsymmetricKeySpec.OPENSSH.fromKey(EncryptionUtility.generateKeyPair(AsymmetricAlgorithm.ED25519).getPublic());
+
+    Assert.assertTrue(line.startsWith("ssh-ed25519 "), "Expected Ed25519 prefix; got: " + line.substring(0, Math.min(40, line.length())));
+  }
+
+  public void testExplicitKeySizeSelectsEllipticCurve ()
+    throws Exception {
+
+    String line = AsymmetricKeySpec.OPENSSH.fromKey(EncryptionUtility.generateKeyPair(AsymmetricAlgorithm.EC, 256).getPublic());
+
+    Assert.assertTrue(line.startsWith("ecdsa-sha2-nistp256 "), "Expected P-256 prefix; got: " + line.substring(0, Math.min(40, line.length())));
+  }
 }

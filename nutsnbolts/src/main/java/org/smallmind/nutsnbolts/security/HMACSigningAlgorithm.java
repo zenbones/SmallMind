@@ -34,6 +34,7 @@ package org.smallmind.nutsnbolts.security;
 
 import java.security.Key;
 import javax.crypto.spec.SecretKeySpec;
+import org.smallmind.nutsnbolts.lang.FormattedIllegalArgumentException;
 
 /**
  * Enumeration of HMAC-based symmetric signing algorithms supported by the library.
@@ -41,6 +42,8 @@ import javax.crypto.spec.SecretKeySpec;
 public enum HMACSigningAlgorithm implements SymmetricSigningAlgorithm {
 
   HMAC_MD5("HmacMD5"), HMAC_SHA_1("HmacSHA1"), HMAC_SHA_256("HmacSHA256");
+
+  public static final int MINIMUM_KEY_BYTES = 14;
 
   private final String algorithmName;
 
@@ -67,10 +70,15 @@ public enum HMACSigningAlgorithm implements SymmetricSigningAlgorithm {
   /**
    * Wraps the supplied raw bytes in a {@link javax.crypto.spec.SecretKeySpec} suitable for this HMAC algorithm.
    *
-   * @param secret the raw secret key bytes
+   * @param secret the raw secret key bytes, at least {@value #MINIMUM_KEY_BYTES} long (112 bits, the floor FIPS-approved providers enforce for HMAC keys)
    * @return a {@link Key} ready for use with {@link javax.crypto.Mac}
+   * @throws FormattedIllegalArgumentException if the secret is {@code null} or shorter than {@value #MINIMUM_KEY_BYTES} bytes
    */
   public Key generateKey (byte[] secret) {
+
+    if ((secret == null) || (secret.length < MINIMUM_KEY_BYTES)) {
+      throw new FormattedIllegalArgumentException("HMAC keys must be at least %d bytes (%d bits)", MINIMUM_KEY_BYTES, MINIMUM_KEY_BYTES * 8);
+    }
 
     return new SecretKeySpec(secret, this.getAlgorithmName());
   }

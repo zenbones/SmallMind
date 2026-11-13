@@ -36,10 +36,11 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.GCMParameterSpec;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 
 /**
@@ -48,52 +49,83 @@ import org.smallmind.nutsnbolts.security.EncryptionUtility;
 public enum Encryption {
 
   /**
-   * AES encryption in CBC mode with PKCS5 padding using a fixed initialization vector.
+   * Authenticated AES encryption using AES/GCM/NoPadding with a 128-bit tag. Every call generates a fresh random 96-bit initialization vector, and the
+   * payload is laid out as the 12-byte IV followed by the ciphertext and tag.
    */
   AES {
 
-    private final byte[] iv = new byte[] {0x47, 0x6C, 0x75, 0x20, 0x4D, 0x6F, 0x62, 0x69, 0x6C, 0x65, 0x20, 0x47, 0x61, 0x6D, 0x65, 0x73};
+    private static final String TRANSFORMATION = "AES/GCM/NoPadding";
+    private static final int IV_LENGTH = 12;
+    private static final int TAG_BITS = 128;
 
     /**
-     * Encrypts the supplied bytes with AES/CBC/PKCS5Padding using the provided key.
+     * Encrypts the supplied bytes with AES/GCM/NoPadding using the provided key and a freshly generated random IV.
      *
      * @param key           the AES key used for encryption
      * @param toBeEncrypted the clear-text bytes to encrypt
-     * @return the ciphertext bytes
-     * @throws NoSuchAlgorithmException           if the AES algorithm is unavailable
-     * @throws InvalidAlgorithmParameterException if the IV parameter is invalid
-     * @throws NoSuchPaddingException             if PKCS5Padding is unavailable
+     * @return the IV followed by the ciphertext and authentication tag
+     * @throws NoSuchAlgorithmException           if AES/GCM is unavailable
+     * @throws NoSuchPaddingException             if the transformation is rejected by the provider
      * @throws InvalidKeyException                if the key is not valid for AES
-     * @throws IllegalBlockSizeException          if the input length is invalid
-     * @throws BadPaddingException                if a padding error occurs
+     * @throws InvalidAlgorithmParameterException if the GCM parameters are rejected by the provider
+     * @throws IllegalBlockSizeException          if the cipher rejects the input
+     * @throws BadPaddingException                if the cipher rejects the input
      */
     @Override
     public byte[] encrypt (Key key, byte[] toBeEncrypted)
-      throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+      throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
 
-      return EncryptionUtility.encrypt(key, "AES/CBC/PKCS5Padding", toBeEncrypted, new IvParameterSpec(iv));
+      byte[] iv = generateIv();
+      byte[] encrypted = EncryptionUtility.encrypt(key, TRANSFORMATION, toBeEncrypted, new GCMParameterSpec(TAG_BITS, iv));
+      byte[] payload = new byte[iv.length + encrypted.length];
+
+      System.arraycopy(iv, 0, payload, 0, iv.length);
+      System.arraycopy(encrypted, 0, payload, iv.length, encrypted.length);
+
+      return payload;
     }
 
     /**
-     * Decrypts bytes previously encrypted with {@link #encrypt(Key, byte[])} using AES/CBC/PKCS5Padding.
+     * Decrypts bytes previously produced by {@link #encrypt(Key, byte[])}, verifying the authentication tag.
      *
      * @param key       the AES key used for decryption
-     * @param encrypted the ciphertext bytes to decrypt
+     * @param encrypted the IV followed by the ciphertext and authentication tag
      * @return the decrypted clear-text bytes
-     * @throws NoSuchAlgorithmException           if the AES algorithm is unavailable
-     * @throws NoSuchPaddingException             if PKCS5Padding is unavailable
+     * @throws NoSuchAlgorithmException           if AES/GCM is unavailable
+     * @throws NoSuchPaddingException             if the transformation is rejected by the provider
      * @throws InvalidKeyException                if the key is not valid for AES
-     * @throws InvalidAlgorithmParameterException if the IV parameter is invalid
-     * @throws IllegalBlockSizeException          if the input length is invalid
-     * @throws BadPaddingException                if a padding error occurs during decryption
+     * @throws InvalidAlgorithmParameterException if the GCM parameters are invalid
+     * @throws IllegalBlockSizeException          if the payload is too short to hold an IV and a tag
+     * @throws BadPaddingException                if authentication fails (wrong key, tampering, or a payload in the old fixed-IV format)
      */
     @Override
     public byte[] decrypt (Key key, byte[] encrypted)
       throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
 
-      return EncryptionUtility.decrypt(key, "AES/CBC/PKCS5Padding", encrypted, new IvParameterSpec(iv));
+      if (encrypted.length < IV_LENGTH + (TAG_BITS / 8)) {
+        throw new IllegalBlockSizeException("The encrypted payload is too short to contain an IV and an authentication tag");
+      } else {
+
+        byte[] body = new byte[encrypted.length - IV_LENGTH];
+
+        System.arraycopy(encrypted, IV_LENGTH, body, 0, body.length);
+
+        return EncryptionUtility.decrypt(key, TRANSFORMATION, body, new GCMParameterSpec(TAG_BITS, encrypted, 0, IV_LENGTH));
+      }
+    }
+
+    // The single place the IV originates; a provider-generated IV (for FIPS approved mode) would replace this and the spec passed above
+    private byte[] generateIv () {
+
+      byte[] iv = new byte[IV_LENGTH];
+
+      SECURE_RANDOM.nextBytes(iv);
+
+      return iv;
     }
   };
+
+  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
   /**
    * Encrypts the provided bytes using this algorithm and the supplied key.

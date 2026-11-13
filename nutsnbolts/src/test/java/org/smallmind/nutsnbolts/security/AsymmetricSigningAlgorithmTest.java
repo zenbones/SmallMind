@@ -47,7 +47,20 @@ public class AsymmetricSigningAlgorithmTest {
 
   public void testECDSASigningAlgorithmEnumNamesMapToJcaIdentifiers () {
 
-    Assert.assertEquals(ECDSASigningAlgorithm.ECDSA_USING_SHA_ALGORITHM.getAlgorithmName(), "EcdsaUsingShaAlgorithm");
+    Assert.assertEquals(ECDSASigningAlgorithm.SHA_256_WITH_ECDSA.getAlgorithmName(), "SHA256withECDSA");
+    Assert.assertEquals(ECDSASigningAlgorithm.SHA_384_WITH_ECDSA.getAlgorithmName(), "SHA384withECDSA");
+    Assert.assertEquals(ECDSASigningAlgorithm.SHA_512_WITH_ECDSA.getAlgorithmName(), "SHA512withECDSA");
+  }
+
+  public void testECDSASignAndVerifyRoundTripSucceedsOnUnmodifiedPayloadAndFailsOnTamperedPayload ()
+    throws Exception {
+
+    byte[] payload = "the quick brown fox".getBytes(StandardCharsets.UTF_8);
+    KeyPair pair = EncryptionUtility.generateKeyPair(AsymmetricAlgorithm.EC);
+    byte[] signature = EncryptionUtility.sign(ECDSASigningAlgorithm.SHA_384_WITH_ECDSA, pair.getPrivate(), payload);
+
+    Assert.assertTrue(EncryptionUtility.verify(ECDSASigningAlgorithm.SHA_384_WITH_ECDSA, pair.getPublic(), payload, signature));
+    Assert.assertFalse(EncryptionUtility.verify(ECDSASigningAlgorithm.SHA_384_WITH_ECDSA, pair.getPublic(), "the quick brown fax".getBytes(StandardCharsets.UTF_8), signature));
   }
 
   public void testEdDSASigningAlgorithmEnumNamesMapToJcaIdentifiers () {

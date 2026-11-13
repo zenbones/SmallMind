@@ -32,12 +32,15 @@
  */
 package org.smallmind.nutsnbolts.json;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Currency;
 import java.util.Date;
+import javax.crypto.AEADBadTagException;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import org.smallmind.nutsnbolts.http.HttpMethod;
 import org.testng.Assert;
@@ -154,6 +157,38 @@ public class XmlAdaptersTest {
 
     Assert.assertTrue(binary.isEncrypted());
     Assert.assertEquals(new String(binary.decrypt(key)), "top-secret");
+  }
+
+  public void testAesEncryptionUsesFreshIvAndDetectsTampering ()
+    throws Exception {
+
+    KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+    keyGenerator.init(256);
+    Key key = keyGenerator.generateKey();
+    byte[] plain = "top-secret".getBytes(StandardCharsets.UTF_8);
+    byte[] first = Encryption.AES.encrypt(key, plain);
+    byte[] second = Encryption.AES.encrypt(key, plain);
+
+    Assert.assertNotEquals(first, second);
+    Assert.assertEquals(first.length, 12 + plain.length + 16);
+    Assert.assertEquals(Encryption.AES.decrypt(key, first), plain);
+
+    first[first.length - 1] ^= 0x01;
+    try {
+      Encryption.AES.decrypt(key, first);
+      Assert.fail("Tampered payload must not decrypt");
+    } catch (AEADBadTagException expected) {
+    }
+  }
+
+  @Test(expectedExceptions = IllegalBlockSizeException.class)
+  public void testAesDecryptRejectsTruncatedPayload ()
+    throws Exception {
+
+    KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+    keyGenerator.init(128);
+
+    Encryption.AES.decrypt(keyGenerator.generateKey(), new byte[8]);
   }
 
   @Test(expectedExceptions = IllegalStateException.class)

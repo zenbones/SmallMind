@@ -1434,7 +1434,10 @@ parser.parse(Files.newInputStream(Paths.get("data.csv")));
 `json` provides JAXB `XmlAdapter`s for types that JAXB does not
 marshal out of the box: `LocalDateTime`, `ZonedDateTime`, `Currency`,
 `Timestamp`, enums (via a generic adapter pattern), and the
-`BinaryData` wrapper for encoded and encrypted byte payloads. The
+`BinaryData` wrapper for encoded and encrypted byte payloads.
+`Encryption.AES` is AES/GCM with a random IV per call; the stored
+bytes are the 12-byte IV followed by the ciphertext and tag, and a
+wrong key or altered payload fails decryption. The
 shared `SortDirection` enum (`ASC` / `DESC`) and its companion
 `SortDirectionEnumXmlAdapter` (which marshals the enum constants in
 lowercase) also live here so query and persistence layers can use one

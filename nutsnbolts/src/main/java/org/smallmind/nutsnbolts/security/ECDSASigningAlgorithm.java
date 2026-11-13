@@ -34,10 +34,11 @@ package org.smallmind.nutsnbolts.security;
 
 /**
  * Enumeration of ECDSA-based asymmetric signing algorithms supported by the library.
+ * Signatures use the JCA default DER encoding, not the fixed-width R||S concatenation required by JOSE (ES256 and relatives).
  */
 public enum ECDSASigningAlgorithm implements AsymmetricSigningAlgorithm {
 
-  ECDSA_USING_SHA_ALGORITHM("EcdsaUsingShaAlgorithm");
+  SHA_256_WITH_ECDSA("SHA256withECDSA"), SHA_384_WITH_ECDSA("SHA384withECDSA"), SHA_512_WITH_ECDSA("SHA512withECDSA");
 
   private final String algorithmName;
 

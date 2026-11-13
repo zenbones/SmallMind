@@ -33,8 +33,12 @@
 package org.smallmind.nutsnbolts.security;
 
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidParameterException;
 import java.security.Key;
 import java.security.KeyPair;
+import java.security.interfaces.ECPublicKey;
+import java.security.interfaces.RSAPublicKey;
+import javax.crypto.spec.IvParameterSpec;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -113,6 +117,68 @@ public class EncryptionUtilityTest {
     byte[] plaintext = EncryptionUtility.decrypt(key, ciphertext);
 
     Assert.assertEquals(plaintext, payload);
+  }
+
+  public void testGenerateKeyDefaultsToAes256 ()
+    throws Exception {
+
+    Assert.assertEquals(EncryptionUtility.generateKey(SymmetricAlgorithm.AES).getEncoded().length, 32);
+  }
+
+  public void testGenerateKeyHonorsExplicitAesSizes ()
+    throws Exception {
+
+    for (int bits : new int[] {128, 192, 256}) {
+      Assert.assertEquals(EncryptionUtility.generateKey(SymmetricAlgorithm.AES, bits).getEncoded().length, bits / 8);
+    }
+  }
+
+  @Test(expectedExceptions = InvalidParameterException.class)
+  public void testGenerateKeyRejectsUnsupportedAesSize ()
+    throws Exception {
+
+    EncryptionUtility.generateKey(SymmetricAlgorithm.AES, 100);
+  }
+
+  public void testGenerateKeyResolvesAlgorithmByJcaName ()
+    throws Exception {
+
+    Assert.assertEquals(EncryptionUtility.generateKey(SymmetricAlgorithm.TRIPLE_DES).getAlgorithm(), "DESede");
+  }
+
+  public void testGenerateKeyPairDefaultsToRsa3072AndEcP384 ()
+    throws Exception {
+
+    Assert.assertEquals(((RSAPublicKey)EncryptionUtility.generateKeyPair(AsymmetricAlgorithm.RSA).getPublic()).getModulus().bitLength(), 3072);
+    Assert.assertEquals(((ECPublicKey)EncryptionUtility.generateKeyPair(AsymmetricAlgorithm.EC).getPublic()).getParams().getOrder().bitLength(), 384);
+  }
+
+  public void testHmacKeyAcceptsMinimumLength () {
+
+    Assert.assertNotNull(HMACSigningAlgorithm.HMAC_SHA_256.generateKey(new byte[HMACSigningAlgorithm.MINIMUM_KEY_BYTES]));
+  }
+
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testHmacKeyRejectsShortSecret () {
+
+    HMACSigningAlgorithm.HMAC_SHA_256.generateKey(new byte[HMACSigningAlgorithm.MINIMUM_KEY_BYTES - 1]);
+  }
+
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testHmacKeyRejectsNullSecret () {
+
+    HMACSigningAlgorithm.HMAC_SHA_256.generateKey(null);
+  }
+
+  public void testExplicitTransformationRoundTripsWithAndWithoutParameters ()
+    throws Exception {
+
+    Key key = EncryptionUtility.generateKey(SymmetricAlgorithm.AES);
+    byte[] payload = "secret content".getBytes(StandardCharsets.UTF_8);
+    IvParameterSpec ivSpec = new IvParameterSpec(new byte[16]);
+
+    Assert.assertEquals(EncryptionUtility.decrypt(key, "AES/ECB/PKCS5Padding", EncryptionUtility.encrypt(key, "AES/ECB/PKCS5Padding", payload)), payload);
+    Assert.assertEquals(EncryptionUtility.decrypt(key, "AES/CBC/PKCS5Padding", EncryptionUtility.encrypt(key, "AES/CBC/PKCS5Padding", payload, ivSpec), ivSpec), payload);
   }
 
   public void testSerializeAndDeserializeSecretKey ()

@@ -37,7 +37,7 @@ package org.smallmind.nutsnbolts.security;
  */
 public enum AsymmetricAlgorithm implements SecurityAlgorithm {
 
-  RSA("RSA"), ED25519("ED25519");
+  RSA("RSA"), EC("EC"), ED25519("ED25519");
 
   private final String algorithmName;
 

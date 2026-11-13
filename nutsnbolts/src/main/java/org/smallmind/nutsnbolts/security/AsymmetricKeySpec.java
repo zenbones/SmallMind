@@ -35,6 +35,7 @@ package org.smallmind.nutsnbolts.security;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.PublicKey;
 import java.security.spec.KeySpec;
@@ -74,10 +75,9 @@ public enum AsymmetricKeySpec {
 
       if (key instanceof PublicKey) {
 
-        String keyAlgorithm;
-        String sshCode = "EdDSA".equals(keyAlgorithm = key.getAlgorithm()) ? "ed25519" : keyAlgorithm.toLowerCase();
+        byte[] blob = OpenSSHPublicKeyUtil.encodePublicKey(PublicKeyFactory.createKey(key.getEncoded()));
 
-        return "ssh-" + sshCode + " " + Base64.getEncoder().encodeToString(OpenSSHPublicKeyUtil.encodePublicKey(PublicKeyFactory.createKey(key.getEncoded())));
+        return openSSHKeyType(blob) + " " + Base64.getEncoder().encodeToString(blob);
       } else {
 
         return "-----BEGIN OPENSSH PRIVATE KEY-----\n" + EncryptionUtility.convertToBlock(Base64.getEncoder().encodeToString(OpenSSHPrivateKeyUtil.encodePrivateKey(PrivateKeyFactory.createKey(key.getEncoded()))), 64) + "\n-----END OPENSSH PRIVATE KEY-----";
@@ -275,6 +275,31 @@ public enum AsymmetricKeySpec {
   private static final Pattern PKCS8_EPILOG_PATTERN = Pattern.compile("\\s+-----END PRIVATE KEY-----$");
   private static final Pattern OPENSSH_PROLOG_PATTERN = Pattern.compile("^-----BEGIN OPENSSH PRIVATE KEY-----\\s+");
   private static final Pattern OPENSSH_EPILOG_PATTERN = Pattern.compile("\\s+-----END OPENSSH PRIVATE KEY-----$");
+
+  /**
+   * Reads the type string that opens an OpenSSH public key blob, which is also the {@code authorized_keys} prefix (e.g. {@code ssh-rsa}, {@code ssh-ed25519}, {@code ecdsa-sha2-nistp256}).
+   *
+   * @param blob the OpenSSH wire-format public key
+   * @return the key type string
+   * @throws IOException if the blob is truncated or its type length is invalid
+   */
+  private static String openSSHKeyType (byte[] blob)
+    throws IOException {
+
+    if (blob.length < 4) {
+      throw new IOException("The encoded OpenSSH public key is truncated");
+    } else {
+
+      int length = ((blob[0] & 0xFF) << 24) | ((blob[1] & 0xFF) << 16) | ((blob[2] & 0xFF) << 8) | (blob[3] & 0xFF);
+
+      if ((length < 0) || (length > blob.length - 4)) {
+        throw new IOException("The encoded OpenSSH public key has an invalid type length");
+      } else {
+
+        return new String(blob, 4, length, StandardCharsets.US_ASCII);
+      }
+    }
+  }
 
   /**
    * Parses raw key text in this encoding format and returns a {@link java.security.spec.KeySpec} for the requested key type.

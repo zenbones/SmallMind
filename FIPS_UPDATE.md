@@ -110,15 +110,15 @@ Keep BC-FIPS `optional` in `nutsnbolts`. Integrations in this repo are caller-ch
 | `HMAC_SHA_1` | HMAC-SHA-1 is still allowed by SP 800-131A but legacy; discouraged. |
 | `HMAC_SHA_256` | Approved. |
 
-- **Key-length floor.** BC-FIPS approved mode rejects HMAC keys shorter than 112 bits. `generateKey(byte[] secret)` wraps raw bytes in `SecretKeySpec` with no check, so a short secret now fails at `Mac.init`. **(verify)** the threshold for your version. Add a length guard so the failure message is clear. `web/jwt/SymmetricJWTKeyMaster.java:64` already SHA-256-hashes short secrets to 256 bits, which passes the floor but is plain-hash stretching, not a KDF.
+- **Key-length floor.** BC-FIPS approved mode rejects HMAC keys shorter than 112 bits. `generateKey(byte[] secret)` wrapped raw bytes in `SecretKeySpec` with no check, so a short secret would fail at `Mac.init`. **(verify)** the threshold for your version. **Done:** `HMACSigningAlgorithm.generateKey` now rejects `null` and secrets under `MINIMUM_KEY_BYTES` (14 bytes, 112 bits) with `IllegalArgumentException`, with or without a FIPS provider. This tightens non-FIPS behavior too; every caller in this repo already passes at least 32 bytes. `web/jwt/SymmetricJWTKeyMaster.java:64` already SHA-256-hashes short secrets to 256 bits, which passes the floor but is plain-hash stretching, not a KDF.
 
 ### 3.3 Signatures: `RSASigningAlgorithm`, `ECDSASigningAlgorithm`, `EdDSASigningAlgorithm`, `AsymmetricAlgorithm`
 
 - `RSASigningAlgorithm.SHA_256_WITH_RSA`: approved (RSA >= 2048).
-- `ECDSASigningAlgorithm.ECDSA_USING_SHA_ALGORITHM("EcdsaUsingShaAlgorithm")` is a jose4j-style name, not a JCA name. `EncryptionUtility` passes it to `Signature.getInstance`, so it **already fails today**. Not a FIPS issue, but fix when touching the enum (`SHA256withECDSA`, etc.).
+- **Done.** `ECDSASigningAlgorithm` now has `SHA_256_WITH_ECDSA`, `SHA_384_WITH_ECDSA`, `SHA_512_WITH_ECDSA` (real JCA names; the old jose4j-style constant never worked). `AsymmetricAlgorithm.EC` was added. Signatures are DER, not the R||S form JOSE `ES256` needs.
 - `EdDSASigningAlgorithm.ED_DSA("EdDSA")` and `AsymmetricAlgorithm.ED25519`: **version-dependent.** Ed25519/Ed448 became approved with FIPS 186-5. **(verify)** support in your `bc-fips` line. If absent, EdDSA is **lost**, which affects JWT `EDDSA`, `AsymmetricJWTKeyMaster`, OpenSSH `ssh-ed25519` handling, and `AsymmetricKeyGenerator ed25519`.
-- Key sizes: `EncryptionUtility.generateKeyPair(AsymmetricAlgorithm)` and `generateKey(SymmetricAlgorithm)` use "the default key size" and never call `initialize(...)`. BC-FIPS requires an explicit approved size (RSA >= 2048, AES 128/192/256). Add overloads taking a size, and initialize RSA to at least 2048 (3072 preferred).
-- Latent bug while here: both methods pass `algorithm.name()` (`TRIPLE_DES`, `RC4`, `ED25519`) instead of `getAlgorithmName()`, so only `AES` and `RSA` work today.
+- **Done.** Key sizes: `generateKeyPair(AsymmetricAlgorithm)` now initializes RSA to 3072 and EC to 384 (secp384r1, pairing with `SHA_384_WITH_ECDSA`); new overload `generateKeyPair(AsymmetricAlgorithm, int keySize)`. `generateKey(SymmetricAlgorithm)` now initializes AES to 256 and resolves the algorithm by `getAlgorithmName()` (the old `name()` lookup broke `TRIPLE_DES`/`RC4`); new overload `generateKey(SymmetricAlgorithm, int keySize)`. Ed25519 has a single size. Remaining for FIPS: BC-FIPS-specific size restrictions for RSA/EC are unverified **(verify)**.
+- **Done.** OpenSSH public key text prefix is read from the encoded blob (`ssh-rsa`, `ssh-ed25519`, `ecdsa-sha2-nistpNNN`) instead of derived from the JCA algorithm name.
 
 ### 3.4 Symmetric ciphers: `SymmetricAlgorithm`, `EncryptionUtility.encrypt/decrypt`, `json/Encryption`
 
@@ -133,7 +133,7 @@ Keep BC-FIPS `optional` in `nutsnbolts`. Integrations in this repo are caller-ch
 - Deprecate or remove `DES`, `TRIPLE_DES`, `RC4`, `BLOWFISH`.
 - `EncryptionUtility.encrypt(Key, byte[])` without a cipher string uses `Cipher.getInstance(key.getAlgorithm())`, i.e. bare `"AES"`, which is AES/ECB in most providers. ECB is an approved mode but not a sound default. Require an explicit transformation, or default new overloads to AES/GCM/NoPadding.
 - AES-GCM in BC-FIPS expects the module to generate the IV; a caller-supplied `GCMParameterSpec` on encryption can be rejected in approved mode. If GCM helpers are added, let the cipher make the IV and return it with the ciphertext. **(verify)**
-- `json/Encryption.java:74,94`: `AES/CBC/PKCS5Padding` with a **fixed, hard-coded IV**. BC-FIPS does not reject this, but it violates SP 800-38A (IV must be unpredictable) and would not survive a compliance review. Fixing it changes ciphertext and breaks decryption of every stored `BinaryData`, so it needs a migration (version marker, or a random IV prepended). Treat it as a data-compatibility decision.
+- **Done.** `json/Encryption.AES` is now AES/GCM/NoPadding via `EncryptionUtility`, with a caller-generated random 96-bit IV (`SecureRandom`, isolated in `generateIv()`), stored as IV then ciphertext and 128-bit tag. Old fixed-IV AES/CBC payloads are not readable; re-encrypting stored `BinaryData` is handled outside this repo. **(verify)** BC-FIPS approved mode may reject a caller-supplied GCM IV on encryption; if so, `generateIv()` and the `GCMParameterSpec` passed to `EncryptionUtility` must be replaced by a provider-generated IV.
 - `PKCS5Padding` is accepted as an alias of PKCS7 in BC. **(verify)**
 
 ### 3.5 Randomness

@@ -39,6 +39,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.InvalidParameterException;
 import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -62,6 +63,10 @@ import javax.crypto.NoSuchPaddingException;
  * Convenience methods for message digesting, symmetric and asymmetric signing/verification, cipher-based encryption and decryption, and key serialization.
  */
 public class EncryptionUtility {
+
+  private static final int AES_DEFAULT_KEY_SIZE = 256;
+  private static final int RSA_DEFAULT_KEY_SIZE = 3072;
+  private static final int EC_DEFAULT_KEY_SIZE = 384;
 
   /**
    * Reformats a single-line string into a block of fixed-width lines separated by newline characters.
@@ -193,7 +198,8 @@ public class EncryptionUtility {
   }
 
   /**
-   * Generates a new symmetric secret key for the given algorithm using the default key size.
+   * Generates a new symmetric secret key for the given algorithm. {@link SymmetricAlgorithm#AES} is initialized to 256 bits so the size
+   * does not vary with the JDK or provider; the other algorithms use the provider's default key size.
    *
    * @param algorithm the symmetric algorithm for which to generate a key
    * @return a freshly generated {@link javax.crypto.SecretKey}
@@ -202,14 +208,37 @@ public class EncryptionUtility {
   public static Key generateKey (SymmetricAlgorithm algorithm)
     throws NoSuchAlgorithmException {
 
-    KeyGenerator keyGenerator;
+    KeyGenerator keyGenerator = KeyGenerator.getInstance(algorithm.getAlgorithmName());
 
-    keyGenerator = KeyGenerator.getInstance(algorithm.name());
+    if (SymmetricAlgorithm.AES.equals(algorithm)) {
+      keyGenerator.init(AES_DEFAULT_KEY_SIZE);
+    }
+
     return keyGenerator.generateKey();
   }
 
   /**
-   * Generates a new asymmetric key pair for the given algorithm using the default key size.
+   * Generates a new symmetric secret key for the given algorithm using an explicit key size (for {@link SymmetricAlgorithm#AES}: 128, 192 or 256).
+   *
+   * @param algorithm the symmetric algorithm for which to generate a key
+   * @param keySize   the key size in bits
+   * @return a freshly generated {@link javax.crypto.SecretKey}
+   * @throws NoSuchAlgorithmException  if the algorithm is not available in the current security environment
+   * @throws InvalidParameterException if the key size is not supported by the algorithm
+   */
+  public static Key generateKey (SymmetricAlgorithm algorithm, int keySize)
+    throws NoSuchAlgorithmException {
+
+    KeyGenerator keyGenerator = KeyGenerator.getInstance(algorithm.getAlgorithmName());
+
+    keyGenerator.init(keySize);
+
+    return keyGenerator.generateKey();
+  }
+
+  /**
+   * Generates a new asymmetric key pair for the given algorithm. {@link AsymmetricAlgorithm#RSA} is initialized to 3072 bits and
+   * {@link AsymmetricAlgorithm#EC} to 384 bits (secp384r1, the curve that pairs with SHA384withECDSA) so the size does not vary with the JDK's default; Ed25519 has a single fixed size.
    *
    * @param algorithm the asymmetric algorithm for which to generate a key pair
    * @return a freshly generated {@link KeyPair}
@@ -218,9 +247,35 @@ public class EncryptionUtility {
   public static KeyPair generateKeyPair (AsymmetricAlgorithm algorithm)
     throws NoSuchAlgorithmException {
 
-    KeyPairGenerator keyPairGenerator;
+    KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(algorithm.getAlgorithmName());
 
-    keyPairGenerator = KeyPairGenerator.getInstance(algorithm.name());
+    switch (algorithm) {
+      case RSA -> keyPairGenerator.initialize(RSA_DEFAULT_KEY_SIZE);
+      case EC -> keyPairGenerator.initialize(EC_DEFAULT_KEY_SIZE);
+      default -> {
+      }
+    }
+
+    return keyPairGenerator.generateKeyPair();
+  }
+
+  /**
+   * Generates a new asymmetric key pair for the given algorithm using an explicit key size.
+   * For {@link AsymmetricAlgorithm#EC} the size selects the curve (256, 384 or 521); for {@link AsymmetricAlgorithm#RSA} it is the modulus length in bits.
+   *
+   * @param algorithm the asymmetric algorithm for which to generate a key pair
+   * @param keySize   the key size in bits
+   * @return a freshly generated {@link KeyPair}
+   * @throws NoSuchAlgorithmException if the algorithm is not available in the current security environment
+   * @throws InvalidParameterException if the key size is not supported by the algorithm
+   */
+  public static KeyPair generateKeyPair (AsymmetricAlgorithm algorithm, int keySize)
+    throws NoSuchAlgorithmException {
+
+    KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(algorithm.getAlgorithmName());
+
+    keyPairGenerator.initialize(keySize);
+
     return keyPairGenerator.generateKeyPair();
   }
 
@@ -308,15 +363,11 @@ public class EncryptionUtility {
   public static byte[] encrypt (Key key, String specificAlgorithm, byte[] toBeEncrypted)
     throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
-    Cipher cipher;
-    byte[] data;
+    Cipher cipher = cipherFor(key, specificAlgorithm);
 
-    cipher = Cipher.getInstance((specificAlgorithm == null) ? key.getAlgorithm() : specificAlgorithm);
     cipher.init(Cipher.ENCRYPT_MODE, key);
 
-    data = toBeEncrypted;
-
-    return cipher.doFinal(data);
+    return cipher.doFinal(toBeEncrypted);
   }
 
   /**
@@ -357,15 +408,11 @@ public class EncryptionUtility {
   public static byte[] encrypt (Key key, String specificAlgorithm, byte[] toBeEncrypted, AlgorithmParameterSpec algorithmParameterSpec)
     throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
-    Cipher cipher;
-    byte[] data;
+    Cipher cipher = cipherFor(key, specificAlgorithm);
 
-    cipher = Cipher.getInstance((specificAlgorithm == null) ? key.getAlgorithm() : specificAlgorithm);
     cipher.init(Cipher.ENCRYPT_MODE, key, algorithmParameterSpec);
 
-    data = toBeEncrypted;
-
-    return cipher.doFinal(data);
+    return cipher.doFinal(toBeEncrypted);
   }
 
   /**
@@ -402,9 +449,8 @@ public class EncryptionUtility {
   public static byte[] decrypt (Key key, String specificAlgorithm, byte[] toBeDecrypted)
     throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
-    Cipher cipher;
+    Cipher cipher = cipherFor(key, specificAlgorithm);
 
-    cipher = Cipher.getInstance((specificAlgorithm == null) ? key.getAlgorithm() : specificAlgorithm);
     cipher.init(Cipher.DECRYPT_MODE, key);
 
     return cipher.doFinal(toBeDecrypted);
@@ -448,11 +494,16 @@ public class EncryptionUtility {
   public static byte[] decrypt (Key key, String specificAlgorithm, byte[] toBeDecrypted, AlgorithmParameterSpec algorithmParameterSpec)
     throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
-    Cipher cipher;
+    Cipher cipher = cipherFor(key, specificAlgorithm);
 
-    cipher = Cipher.getInstance((specificAlgorithm == null) ? key.getAlgorithm() : specificAlgorithm);
     cipher.init(Cipher.DECRYPT_MODE, key, algorithmParameterSpec);
 
     return cipher.doFinal(toBeDecrypted);
+  }
+
+  private static Cipher cipherFor (Key key, String specificAlgorithm)
+    throws NoSuchAlgorithmException, NoSuchPaddingException {
+
+    return Cipher.getInstance((specificAlgorithm == null) ? key.getAlgorithm() : specificAlgorithm);
   }
 }
