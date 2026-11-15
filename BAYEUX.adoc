@@ -865,10 +865,12 @@ public interface Server<V extends Value<V>> extends Attributed {
 
 Notable behaviours:
 
-* `start` is idempotent relative to the backbone and protocols —
-  each protocol's `init` is called exactly once, with the
-  `ServletConfig` forwarded so that transports that need to read
-  servlet init-params can do so.
+* `start` runs once. It brings up the backbone, calls each protocol's
+  `init` exactly once with the `ServletConfig` forwarded so that
+  transports that need to read servlet init-params can do so, and
+  schedules the idle-maintenance executors. A second call throws
+  `ServletException` before touching any of them; the servlet's `init`
+  is the one expected caller.
 * `removeChannel` throws `ChannelStateException` if the
   channel's `isPersistent()` flag is `true`. Unsubscribe every
   session before removal if you want listeners to see the

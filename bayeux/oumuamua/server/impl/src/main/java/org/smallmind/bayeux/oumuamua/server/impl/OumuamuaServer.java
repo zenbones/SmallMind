@@ -44,6 +44,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import org.smallmind.bayeux.oumuamua.server.api.BayeuxService;
@@ -87,6 +88,7 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
  */
 public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed implements Server<V> {
 
+  private final AtomicBoolean started = new AtomicBoolean(false);
   private final ExecutorService executorService;
   private final PerApplicationScope perApplicationScope;
   private final ConcurrentHashMap<String, OumuamuaSession<V>> sessionMap = new ConcurrentHashMap<>();
@@ -160,15 +162,22 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   /**
    * Starts the server by bringing up the backbone, initializing each protocol, and scheduling the
    * idle-channel and idle-session maintenance tasks on dedicated single-thread daemon scheduled
-   * executors.
+   * executors. The server starts once: a second call fails before touching the backbone, the protocols, or
+   * the executors, because repeating a protocol's {@code init} would re-register its endpoint and the first
+   * pair of maintenance executors would be orphaned.
    *
    * @param servletConfig servlet configuration forwarded to each protocol's {@code init} method
-   * @throws ServletException if the backbone fails to start or a protocol throws during initialization
+   * @throws ServletException if the server has already been started, if the backbone fails to start, or if a
+   *                          protocol throws during initialization
    */
   public void start (ServletConfig servletConfig)
     throws ServletException {
 
     Backbone<V> backbone;
+
+    if (!started.compareAndSet(false, true)) {
+      throw new ServletException("The " + OumuamuaServer.class.getSimpleName() + " has already been started");
+    }
 
     LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server starting...");
     LoggerManager.getLogger(OumuamuaServer.class).info("\n" + JsonCodec.instance().writeAsPrettyPrintedString(OumuamuaConfigurationOutView.instance(configuration)));

@@ -637,6 +637,23 @@ public class OumuamuaServerTest {
     Mockito.verify(protocol).init(server, servletConfig);
   }
 
+  // A second start would re-register every protocol's endpoint and orphan the first idle executors, so it fails
+  // before touching either.
+  @Test
+  public void testSecondStartFailsBeforeReinitializingProtocols ()
+    throws Exception {
+
+    OumuamuaServer<OrthodoxValue> server = newServer();
+    ServletConfig servletConfig = Mockito.mock(ServletConfig.class);
+
+    server.start(servletConfig);
+
+    Assert.assertThrows(ServletException.class, () -> server.start(servletConfig));
+    Mockito.verify(protocol, Mockito.times(1)).init(server, servletConfig);
+
+    server.stop();
+  }
+
   @Test(expectedExceptions = ServletException.class)
   public void testStartWrapsBackboneStartUpFailureInServletException ()
     throws Exception {
