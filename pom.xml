@@ -104,7 +104,7 @@
     <httpcomponents5.core.version>5.4</httpcomponents5.core.version>
     <jackson.version>3.1.0</jackson.version>
     <jackson.annotations.version>2.21</jackson.annotations.version>
-    <jackson2.version>2.18.4</jackson2.version>
+    <jackson2.version>2.18.11</jackson2.version>
     <jakarta.activation.version>2.1.4</jakarta.activation.version>
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <jakarta.el.version>6.0.1</jakarta.el.version>
