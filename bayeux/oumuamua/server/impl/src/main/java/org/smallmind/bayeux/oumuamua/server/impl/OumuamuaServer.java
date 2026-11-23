@@ -44,6 +44,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import org.smallmind.bayeux.oumuamua.server.api.BayeuxService;
@@ -67,6 +68,8 @@ import org.smallmind.bayeux.oumuamua.server.spi.Connection;
 import org.smallmind.bayeux.oumuamua.server.spi.DefaultRoute;
 import org.smallmind.nutsnbolts.scope.PerApplicationScope;
 import org.smallmind.nutsnbolts.scope.ScopeException;
+import org.smallmind.nutsnbolts.util.ComponentStateException;
+import org.smallmind.nutsnbolts.util.ComponentStatus;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
@@ -80,14 +83,14 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
  * configuration carries is used, and a configuration carrying none adopts whichever scope is bound on the
  * constructing thread. When that leaves the server with a scope, it runs the executor it creates by default and its
  * idle-channel and idle-session timers inside that scope, and exposes it through {@link #getPerApplicationScope()}
- * so the servlets and WebSocket endpoint can bind their own container callbacks the same way. A caller-supplied
- * executor is used as given.
+ * so the servlets and WebSocket endpoint can bind their own container callbacks the same way. An executor
+ * made by a configured {@link ExecutorServiceFactory} is used as given.
  *
  * @param <V> the concrete {@link Value} type used throughout message processing
  */
 public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed implements Server<V> {
 
-  private final ExecutorService executorService;
+  private final AtomicReference<ComponentStatus> statusRef = new AtomicReference<>(ComponentStatus.INITIALIZED);
   private final PerApplicationScope perApplicationScope;
   private final ConcurrentHashMap<String, OumuamuaSession<V>> sessionMap = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, Protocol<V>> protocolMap = new ConcurrentHashMap<>();
@@ -99,6 +102,7 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   private final String[] protocolNames;
   private final boolean allowsImplicitConnection;
   private final long sessionConnectionIntervalMilliseconds;
+  private ExecutorService executorService;
   private ScheduledExecutorService idleChannelExecutor;
   private ScheduledExecutorService idleSessionExecutor;
 
@@ -121,13 +125,16 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
       throw new OumuamuaException("Missing codec");
     } else {
 
-      ExecutorService configuredExecutorService;
+      ExecutorServiceFactory executorServiceFactory;
 
       this.configuration = configuration;
 
       perApplicationScope = PerApplicationScope.resolve(configuration.getPerApplicationScope());
+
       //  A supplied executor is the application's to wrap; only the default one is built here, so only it is bound.
-      executorService = ((configuredExecutorService = configuration.getExecutorService()) != null) ? configuredExecutorService : Executors.newThreadPerTaskExecutor(boundThreadFactory(Thread.ofVirtual().factory()));
+      if (((executorServiceFactory = configuration.getExecutorServiceFactory()) == null) || ((executorService = executorServiceFactory.instantiate()) == null)) {
+        executorService = Executors.newThreadPerTaskExecutor(boundThreadFactory(Thread.ofVirtual().factory()));
+      }
 
       allowsImplicitConnection = configuration.isAllowsImplicitConnection();
       sessionConnectionIntervalMilliseconds = configuration.getSessionConnectIntervalSeconds() * 1000L;
@@ -160,100 +167,127 @@ public class OumuamuaServer<V extends Value<V>> extends AbstractAttributed imple
   /**
    * Starts the server by bringing up the backbone, initializing each protocol, and scheduling the
    * idle-channel and idle-session maintenance tasks on dedicated single-thread daemon scheduled
-   * executors.
+   * executors. The server starts once: a second call fails before touching the backbone, the protocols, or
+   * the executors, because repeating a protocol's {@code init} would re-register its endpoint and the first
+   * pair of maintenance executors would be orphaned. The status moves from {@code INITIALIZED} to {@code STARTING}
+   * on entry and to {@code STARTED} on completion; a failed start is not rolled back and leaves the server in
+   * {@code STARTING}, from which it can be neither started nor stopped.
    *
    * @param servletConfig servlet configuration forwarded to each protocol's {@code init} method
-   * @throws ServletException if the backbone fails to start or a protocol throws during initialization
+   * @throws ServletException        if the backbone fails to start or a protocol throws during initialization
+   * @throws ComponentStateException if the server is not in the {@code INITIALIZED} state (it has already been
+   *                                 started, or has been stopped)
    */
   public void start (ServletConfig servletConfig)
-    throws ServletException {
+    throws ServletException, ComponentStateException {
 
-    Backbone<V> backbone;
+    if (!statusRef.compareAndSet(ComponentStatus.INITIALIZED, ComponentStatus.STARTING)) {
+      throw new ComponentStateException("The %s cannot be started from status %s", OumuamuaServer.class.getSimpleName(), statusRef.get());
+    } else {
 
-    LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server starting...");
-    LoggerManager.getLogger(OumuamuaServer.class).info("\n" + JsonCodec.instance().writeAsPrettyPrintedString(OumuamuaConfigurationOutView.instance(configuration)));
+      Backbone<V> backbone;
 
-    if ((backbone = getBackbone()) != null) {
-      try {
-        backbone.startUp(this);
-      } catch (Exception exception) {
-        throw new ServletException(exception);
+      LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server starting...");
+      LoggerManager.getLogger(OumuamuaServer.class).info(JsonCodec.instance().writeAsPrettyPrintedString(OumuamuaConfigurationOutView.instance(configuration)));
+
+      if ((backbone = getBackbone()) != null) {
+        try {
+          backbone.startUp(this);
+        } catch (Exception exception) {
+          throw new ServletException(exception);
+        }
       }
+
+      for (Protocol<V> protocol : configuration.getProtocols()) {
+        protocol.init(this, servletConfig);
+        protocolMap.put(protocol.getName(), protocol);
+      }
+
+      idleChannelExecutor = Executors.newSingleThreadScheduledExecutor(boundThreadFactory((runnable) -> {
+
+        Thread thread = new Thread(runnable, "oumuamua-idle-channel");
+
+        thread.setDaemon(true);
+
+        return thread;
+      }));
+      idleChannelExecutor.scheduleWithFixedDelay(new IdleChannelSifter<>(configuration.getIdleCleanupLogLevel(), channelTree, this::onRemoved), configuration.getIdleChannelCycleMinutes(), configuration.getIdleChannelCycleMinutes(), TimeUnit.MINUTES);
+
+      idleSessionExecutor = Executors.newSingleThreadScheduledExecutor(boundThreadFactory((runnable) -> {
+
+        Thread thread = new Thread(runnable, "oumuamua-idle-session");
+
+        thread.setDaemon(true);
+
+        return thread;
+      }));
+      idleSessionExecutor.scheduleWithFixedDelay(new IdleSessionInspector<>(this, configuration.getIdleCleanupLogLevel()), configuration.getIdleSessionCycleMinutes(), configuration.getIdleSessionCycleMinutes(), TimeUnit.MINUTES);
+
+      statusRef.set(ComponentStatus.STARTED);
+      LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server started...");
     }
-
-    for (Protocol<V> protocol : configuration.getProtocols()) {
-      protocol.init(this, servletConfig);
-      protocolMap.put(protocol.getName(), protocol);
-    }
-
-    idleChannelExecutor = Executors.newSingleThreadScheduledExecutor(boundThreadFactory((runnable) -> {
-
-      Thread thread = new Thread(runnable, "oumuamua-idle-channel");
-
-      thread.setDaemon(true);
-
-      return thread;
-    }));
-    idleChannelExecutor.scheduleWithFixedDelay(new IdleChannelSifter<>(configuration.getIdleCleanupLogLevel(), channelTree, this::onRemoved), configuration.getIdleChannelCycleMinutes(), configuration.getIdleChannelCycleMinutes(), TimeUnit.MINUTES);
-
-    idleSessionExecutor = Executors.newSingleThreadScheduledExecutor(boundThreadFactory((runnable) -> {
-
-      Thread thread = new Thread(runnable, "oumuamua-idle-session");
-
-      thread.setDaemon(true);
-
-      return thread;
-    }));
-    idleSessionExecutor.scheduleWithFixedDelay(new IdleSessionInspector<>(this, configuration.getIdleCleanupLogLevel()), configuration.getIdleSessionCycleMinutes(), configuration.getIdleSessionCycleMinutes(), TimeUnit.MINUTES);
-
-    LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server started...");
   }
 
   /**
    * Shuts down the backbone, then shuts down both idle-maintenance executors — waiting up to
    * {@code configuration.getIdleCheckingTerminationTimeoutSeconds()} seconds for each to terminate
-   * and logging if it times out — and finally shuts down the dispatch executor service.
+   * and logging if it times out — and finally shuts down the dispatch executor service, including one made by a configured
+   * {@link ExecutorServiceFactory}. The status moves from {@code STARTED} to {@code STOPPING} on entry and to
+   * {@code STOPPED} on completion, and a stopped server cannot be started again. A call made while the server is
+   * already {@code STOPPING} or {@code STOPPED} does nothing, so a servlet's {@code destroy} and a context listener
+   * can both stop the same server.
+   *
+   * @throws ComponentStateException if the server was never started or is still starting
    */
-  public void stop () {
+  public void stop ()
+    throws ComponentStateException {
 
-    Backbone<V> backbone;
+    ComponentStatus currentStatus;
 
-    LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server stopping...");
+    if (ComponentStatus.STARTED.equals(currentStatus = statusRef.compareAndExchange(ComponentStatus.STARTED, ComponentStatus.STOPPING))) {
 
-    if ((backbone = getBackbone()) != null) {
+      Backbone<V> backbone;
+
+      LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server stopping...");
+
+      if ((backbone = getBackbone()) != null) {
+        try {
+          backbone.shutDown();
+        } catch (Exception exception) {
+          LoggerManager.getLogger(OumuamuaServer.class).error(exception);
+        }
+      }
+
+      idleSessionExecutor.shutdown();
       try {
-        backbone.shutDown();
-      } catch (Exception exception) {
-        LoggerManager.getLogger(OumuamuaServer.class).error(exception);
+        if (!idleSessionExecutor.awaitTermination(configuration.getIdleCheckingTerminationTimeoutSeconds(), TimeUnit.SECONDS)) {
+          LoggerManager.getLogger(OumuamuaServer.class).error("Timed out waiting for idle session executor to terminate (%d, %s)", configuration.getIdleCheckingTerminationTimeoutSeconds(), TimeUnit.SECONDS.name());
+        }
+      } catch (InterruptedException interruptedException) {
+        LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
       }
-    }
 
-    idleSessionExecutor.shutdown();
-    try {
-      if (!idleSessionExecutor.awaitTermination(configuration.getIdleCheckingTerminationTimeoutSeconds(), TimeUnit.SECONDS)) {
-        LoggerManager.getLogger(OumuamuaServer.class).error("Timed out waiting for idle session executor to terminate (%d, %s)", configuration.getIdleCheckingTerminationTimeoutSeconds(), TimeUnit.SECONDS.name());
+      idleChannelExecutor.shutdown();
+      try {
+        if (!idleChannelExecutor.awaitTermination(configuration.getIdleCheckingTerminationTimeoutSeconds(), TimeUnit.SECONDS)) {
+          LoggerManager.getLogger(OumuamuaServer.class).error("Timed out waiting for idle channel executor to terminate (%d, %s)", configuration.getIdleCheckingTerminationTimeoutSeconds(), TimeUnit.SECONDS.name());
+        }
+      } catch (InterruptedException interruptedException) {
+        LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
       }
-    } catch (InterruptedException interruptedException) {
-      LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
-    }
 
-    idleChannelExecutor.shutdown();
-    try {
-      if (!idleChannelExecutor.awaitTermination(configuration.getIdleCheckingTerminationTimeoutSeconds(), TimeUnit.SECONDS)) {
-        LoggerManager.getLogger(OumuamuaServer.class).error("Timed out waiting for idle channel executor to terminate (%d, %s)", configuration.getIdleCheckingTerminationTimeoutSeconds(), TimeUnit.SECONDS.name());
-      }
-    } catch (InterruptedException interruptedException) {
-      LoggerManager.getLogger(OumuamuaServer.class).error(interruptedException);
+      executorService.shutdown();
+      statusRef.set(ComponentStatus.STOPPED);
+      LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server stopped...");
+    } else if (!currentStatus.in(ComponentStatus.STOPPING, ComponentStatus.STOPPED)) {
+      throw new ComponentStateException("The %s cannot be stopped from status %s", OumuamuaServer.class.getSimpleName(), currentStatus);
     }
-
-    executorService.shutdown();
-    LoggerManager.getLogger(OumuamuaServer.class).info("Oumuamua Server stopped...");
   }
 
   /**
    * Returns the executor service used to dispatch asynchronous server tasks.
    *
-   * @return the configured executor, or the default virtual-thread-per-task executor
+   * @return the executor made by the configured {@link ExecutorServiceFactory}, or the default virtual-thread-per-task executor
    */
   public ExecutorService getExecutorService () {
 

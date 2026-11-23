@@ -60,6 +60,7 @@ import org.smallmind.bayeux.oumuamua.server.spi.json.orthodox.OrthodoxValue;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 import org.smallmind.nutsnbolts.scope.MissingPerApplicationScopeException;
 import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.util.ComponentStateException;
 import org.smallmind.nutsnbolts.scope.ScopeException;
 import org.smallmind.scribe.pen.Level;
 import org.testng.Assert;
@@ -188,7 +189,7 @@ public class OumuamuaServerTest {
     PerApplicationScope perApplicationScope = new PerApplicationScope();
 
     configuration.setPerApplicationScope(perApplicationScope);
-    configuration.setExecutorService(Executors.newSingleThreadExecutor());
+    configuration.setExecutorServiceFactory(Executors::newSingleThreadExecutor);
 
     OumuamuaServer<OrthodoxValue> server = newServer();
 
@@ -635,6 +636,43 @@ public class OumuamuaServerTest {
     Mockito.verify(backbone).startUp(server);
     Mockito.verify(backbone).shutDown();
     Mockito.verify(protocol).init(server, servletConfig);
+  }
+
+  // A second start would re-register every protocol's endpoint and orphan the first idle executors, so it fails
+  // before touching either.
+  @Test
+  public void testSecondStartFailsBeforeReinitializingProtocols ()
+    throws Exception {
+
+    OumuamuaServer<OrthodoxValue> server = newServer();
+    ServletConfig servletConfig = Mockito.mock(ServletConfig.class);
+
+    server.start(servletConfig);
+
+    Assert.assertThrows(ComponentStateException.class, () -> server.start(servletConfig));
+    Mockito.verify(protocol, Mockito.times(1)).init(server, servletConfig);
+
+    server.stop();
+  }
+
+  @Test(expectedExceptions = ComponentStateException.class)
+  public void testStopBeforeStartFails ()
+    throws Exception {
+
+    newServer().stop();
+  }
+
+  public void testStopTwiceIsNoOpAndRestartAfterStopFails ()
+    throws Exception {
+
+    OumuamuaServer<OrthodoxValue> server = newServer();
+    ServletConfig servletConfig = Mockito.mock(ServletConfig.class);
+
+    server.start(servletConfig);
+    server.stop();
+
+    server.stop();
+    Assert.assertThrows(ComponentStateException.class, () -> server.start(servletConfig));
   }
 
   @Test(expectedExceptions = ServletException.class)

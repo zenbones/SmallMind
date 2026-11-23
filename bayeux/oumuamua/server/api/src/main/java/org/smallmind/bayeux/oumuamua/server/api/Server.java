@@ -37,6 +37,7 @@ import jakarta.servlet.ServletException;
 import org.smallmind.bayeux.oumuamua.server.api.backbone.Backbone;
 import org.smallmind.bayeux.oumuamua.server.api.json.Codec;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.nutsnbolts.util.ComponentStateException;
 
 /**
  * Central Bayeux server contract responsible for channel and session management, protocol routing,
@@ -210,15 +211,21 @@ public interface Server<V extends Value<V>> extends Attributed {
    * Starts the server, initializing all registered protocols and transports.
    *
    * @param servletConfig servlet configuration supplied to transports during initialization
-   * @throws ServletException if any protocol or transport fails to initialize
+   * @throws Exception if the server cannot be started; implementations are expected to throw
+   *                   {@link ServletException} when a protocol, transport or backbone fails to initialize, and
+   *                   {@link ComponentStateException} when the server is not in a state from which it can be started
    */
   void start (ServletConfig servletConfig)
-    throws ServletException;
+    throws Exception;
 
   /**
    * Shuts down the server and releases all held resources.
+   *
+   * @throws Exception if the server cannot be stopped; implementations are expected to throw
+   *                   {@link ComponentStateException} when the server is not in a state from which it can be stopped
    */
-  void stop ();
+  void stop ()
+    throws Exception;
 
   /**
    * Returns the Bayeux protocol version this server implements.

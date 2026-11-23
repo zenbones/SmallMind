@@ -49,6 +49,7 @@ import org.smallmind.bayeux.oumuamua.server.impl.longpolling.LongPollingTranspor
 import org.smallmind.bayeux.oumuamua.server.impl.longpolling.ServletProtocol;
 import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
+import org.smallmind.nutsnbolts.util.ComponentStateException;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
@@ -110,7 +111,11 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
           throw new ServletException("No long polling transport support has been configured");
         } else {
           connection = new LongPollingConnection<>(transport, server);
-          server.start(servletConfig);
+          try {
+            server.start(servletConfig);
+          } catch (ComponentStateException componentStateException) {
+            throw new ServletException(componentStateException);
+          }
         }
       }
     }
@@ -204,7 +209,11 @@ public class OumuamuaServlet<V extends Value<V>> extends HttpServlet {
   @Override
   public void destroy () {
 
-    server.stop();
+    try {
+      server.stop();
+    } catch (ComponentStateException componentStateException) {
+      LoggerManager.getLogger(OumuamuaServlet.class).error(componentStateException);
+    }
 
     super.destroy();
   }

@@ -57,7 +57,8 @@ public class OumuamuaServletContextListenerTest {
     Mockito.verify(servletContext).setAttribute(Server.ATTRIBUTE, server);
   }
 
-  public void testContextDestroyedStopsServer () {
+  public void testContextDestroyedStopsServer ()
+    throws Exception {
 
     OumuamuaServer<OrthodoxValue> server = Mockito.mock(OumuamuaServer.class);
     ServletContextEvent event = Mockito.mock(ServletContextEvent.class);

@@ -88,16 +88,16 @@ public class OumuamuaServerBranchTest {
     return new OumuamuaServer<>(configuration);
   }
 
-  public void testConstructorPicksUpCustomExecutorService ()
+  public void testConstructorPicksUpExecutorServiceFromFactory ()
     throws Exception {
 
     ExecutorService customExecutor = Executors.newSingleThreadExecutor();
 
-    configuration.setExecutorService(customExecutor);
+    configuration.setExecutorServiceFactory(() -> customExecutor);
 
     OumuamuaServer<OrthodoxValue> server = new OumuamuaServer<>(configuration);
 
-    Assert.assertSame(server.getExecutorService(), customExecutor, "Configured executor must be used when supplied");
+    Assert.assertSame(server.getExecutorService(), customExecutor, "Executor made by the configured factory must be used");
 
     customExecutor.shutdown();
   }

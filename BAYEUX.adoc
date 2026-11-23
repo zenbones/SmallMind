@@ -819,8 +819,8 @@ public interface Server<V extends Value<V>> extends Attributed {
 
   String ATTRIBUTE = "org.smallmind.bayeux.oumuamua.server";
 
-  void start(ServletConfig servletConfig) throws ServletException;
-  void stop();
+  void start(ServletConfig servletConfig) throws Exception;
+  void stop() throws Exception;
 
   // channels
   Channel<V>   findChannel(String path)   throws InvalidPathException;
@@ -865,10 +865,25 @@ public interface Server<V extends Value<V>> extends Attributed {
 
 Notable behaviours:
 
-* `start` is idempotent relative to the backbone and protocols —
-  each protocol's `init` is called exactly once, with the
-  `ServletConfig` forwarded so that transports that need to read
-  servlet init-params can do so.
+* `start` runs once. It brings up the backbone, calls each protocol's
+  `init` exactly once with the `ServletConfig` forwarded so that
+  transports that need to read servlet init-params can do so, and
+  schedules the idle-maintenance executors. A second call throws
+  `ComponentStateException` before touching any of them; the servlet's `init`
+  is the one expected caller. A failed `start` is not rolled back: the
+  server stays in `STARTING` and can be neither started nor stopped.
+  The `Server` interface declares `throws Exception` on `start` and
+  `stop`; `OumuamuaServer` throws `ServletException` when the backbone or
+  a protocol fails to initialize, and `ComponentStateException` when the
+  server is in the wrong state. The servlets wrap the latter from `start`
+  in a `ServletException`, and log it from `destroy` and
+  `contextDestroyed`.
+* `stop` shuts down the backbone, the idle-maintenance executors, and
+  the dispatch executor, and a stopped server cannot be started again.
+  Calling it on a server that is already stopping or stopped does
+  nothing, so a servlet's `destroy` and the context listener can both
+  stop the same server. Calling it on a server that was never started,
+  or is still starting, throws `ComponentStateException`.
 * `removeChannel` throws `ChannelStateException` if the
   channel's `isPersistent()` flag is `true`. Unsubscribe every
   session before removal if you want listeners to see the
@@ -1556,17 +1571,23 @@ a per-channel `ChannelInitializer`.
 
 The executor runs `onMessages` for long-polling requests and the
 `process` pass for WebSocket frames — the packet listeners, services,
-and `SecurityPolicy` calls those make. With no `executorService`
+and `SecurityPolicy` calls those make. With no `executorServiceFactory`
 configured the server builds a virtual-thread-per-task executor and,
-when it holds a scope, binds that scope on every task. A supplied
-executor is used as given, and its threads bind nothing:
+when it holds a scope, binds that scope on every task. With a factory,
+the server calls its `instantiate()` once, in the `OumuamuaServer`
+constructor, and uses the executor it returns as given; its threads bind
+nothing. The server owns that executor and `stop()` shuts it down, so
+`instantiate()` must not return an executor shared with
+other code. A factory that returns `null` (for example an unconfigured
+`WrappedExecutorServiceFactory`) leaves the server on its default
+executor:
 
 * With a scope and no `PerApplicationContext` on its threads, DAO and
-  session lookups made from a supplied executor throw
+  session lookups made from a factory-built executor throw
   `MissingPerApplicationContextException` and `Instrument` metrics
   silently no-op.
 * With a context (the Tanuki wrapper, or any context-only host), a
-  supplied executor whose threads were created from a thread carrying
+  factory-built executor whose threads were created from a thread carrying
   the context map resolves through it.
 
 The server's scope is fixed once, in the `OumuamuaServer` constructor,
@@ -1595,10 +1616,10 @@ or on another thread, is not adopted.
 `AsyncOumuamuaServlet` never uses the configured executor: it builds its
 own virtual-thread-per-task executor in `init`, bound to the server's
 scope when it holds one. `OumuamuaServlet` and the WebSocket endpoint
-submit to `server.getExecutorService()`, so a supplied executor affects
+submit to `server.getExecutorService()`, so a configured factory affects
 only those two entry points.
 
-To supply an executor that runs inside the scope, bind it from the scope
+To supply a factory whose executor runs inside the scope, bind it from the scope
 instance. The static `PerApplicationScope.wrapThreadFactory` captures the
 binding of the thread that calls it and throws
 `MissingPerApplicationScopeException` when there is none, which is the
@@ -1611,11 +1632,11 @@ its scope off; the instance methods `boundThreadFactory` and
 PerApplicationScope perApplicationScope = ...;                              <1>
 
 configuration.setPerApplicationScope(perApplicationScope);
-configuration.setExecutorService(Executors.newThreadPerTaskExecutor(
+configuration.setExecutorServiceFactory(() -> Executors.newThreadPerTaskExecutor(
   perApplicationScope.boundThreadFactory(Thread.ofVirtual().factory())));   <2>
 ----
 <1> The same instance the configuration, and any `KafkaBackbone`, receive.
-<2> Every task the executor runs is bound to that scope.
+<2> The factory creates the executor in the server constructor; every task it runs is bound to that scope.
 
 == Error Model
 
@@ -1708,8 +1729,8 @@ Scope errors::
 | `DEBUG`
 | `OumuamuaConfiguration`
 
-| `executorService`
-| A virtual-thread-per-task executor whose threads run inside the server's resolved scope when it holds one. A supplied executor is used as given — its threads are the application's to bind.
+| `executorServiceFactory`
+| `null` — the server builds a virtual-thread-per-task executor whose threads run inside its resolved scope when it holds one. A factory's executor is used as given — its threads are the application's to bind — and is shut down by `stop()`.
 | `OumuamuaServer` constructor
 
 | `perApplicationScope`

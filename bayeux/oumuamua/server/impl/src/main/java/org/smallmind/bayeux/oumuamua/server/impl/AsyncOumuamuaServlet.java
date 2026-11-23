@@ -53,6 +53,7 @@ import org.smallmind.bayeux.oumuamua.server.impl.longpolling.ServletProtocol;
 import org.smallmind.bayeux.oumuamua.server.spi.Protocols;
 import org.smallmind.bayeux.oumuamua.server.spi.Transports;
 import org.smallmind.nutsnbolts.scope.PerApplicationScope;
+import org.smallmind.nutsnbolts.util.ComponentStateException;
 import org.smallmind.scribe.pen.LoggerManager;
 
 /**
@@ -115,7 +116,11 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
 
           executorService = Executors.newThreadPerTaskExecutor((perApplicationScope == null) ? Thread.ofVirtual().factory() : perApplicationScope.boundThreadFactory(Thread.ofVirtual().factory()));
           connection = new LongPollingConnection<>(transport, server);
-          server.start(servletConfig);
+          try {
+            server.start(servletConfig);
+          } catch (ComponentStateException componentStateException) {
+            throw new ServletException(componentStateException);
+          }
         }
       }
     }
@@ -165,7 +170,11 @@ public class AsyncOumuamuaServlet<V extends Value<V>> extends HttpServlet {
   @Override
   public void destroy () {
 
-    server.stop();
+    try {
+      server.stop();
+    } catch (ComponentStateException componentStateException) {
+      LoggerManager.getLogger(AsyncOumuamuaServlet.class).error(componentStateException);
+    }
     executorService.shutdown();
 
     super.destroy();

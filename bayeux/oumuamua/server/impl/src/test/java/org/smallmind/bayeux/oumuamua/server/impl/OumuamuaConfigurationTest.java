@@ -247,16 +247,12 @@ public class OumuamuaConfigurationTest {
     Assert.assertSame(configuration.getSecurityPolicy(), policy);
   }
 
-  public void testSetAndGetExecutorService () {
+  public void testSetAndGetExecutorServiceFactory () {
 
-    java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor();
+    ExecutorServiceFactory factory = java.util.concurrent.Executors::newSingleThreadExecutor;
 
-    try {
-      configuration.setExecutorService(executor);
-      Assert.assertSame(configuration.getExecutorService(), executor);
-    } finally {
-      executor.shutdown();
-    }
+    configuration.setExecutorServiceFactory(factory);
+    Assert.assertSame(configuration.getExecutorServiceFactory(), factory);
   }
 
   public void testSetAndGetLogLevels () {

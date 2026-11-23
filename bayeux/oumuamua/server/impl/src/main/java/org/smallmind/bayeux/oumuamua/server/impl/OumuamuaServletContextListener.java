@@ -36,6 +36,8 @@ import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import org.smallmind.bayeux.oumuamua.server.api.Server;
 import org.smallmind.bayeux.oumuamua.server.api.json.Value;
+import org.smallmind.nutsnbolts.util.ComponentStateException;
+import org.smallmind.scribe.pen.LoggerManager;
 
 /**
  * Servlet context lifecycle listener that publishes a pre-configured {@link OumuamuaServer} into
@@ -81,6 +83,10 @@ public class OumuamuaServletContextListener<V extends Value<V>> implements Servl
   @Override
   public void contextDestroyed (ServletContextEvent servletContextEvent) {
 
-    oumuamuaServer.stop();
+    try {
+      oumuamuaServer.stop();
+    } catch (ComponentStateException componentStateException) {
+      LoggerManager.getLogger(OumuamuaServletContextListener.class).error(componentStateException);
+    }
   }
 }

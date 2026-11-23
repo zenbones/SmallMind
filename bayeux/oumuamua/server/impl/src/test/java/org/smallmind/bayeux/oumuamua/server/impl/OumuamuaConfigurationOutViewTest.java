@@ -80,7 +80,7 @@ public class OumuamuaConfigurationOutViewTest {
     Assert.assertNull(view.getProtocols());
     Assert.assertNull(view.getServices());
     Assert.assertNull(view.getListeners());
-    Assert.assertNull(view.getExecutorService());
+    Assert.assertNull(view.getExecutorServiceFactory());
     Assert.assertNull(view.getSecurityPolicy());
     Assert.assertNull(view.getParsedReflectingPaths());
     Assert.assertNull(view.getParsedStreamingPaths());
@@ -121,16 +121,12 @@ public class OumuamuaConfigurationOutViewTest {
     Assert.assertTrue(OumuamuaConfigurationOutView.instance(configuration).isAllowsImplicitConnection());
   }
 
-  public void testInstanceCopiesExecutorService () {
+  public void testInstanceCopiesExecutorServiceFactory () {
 
-    ExecutorService executor = Executors.newSingleThreadExecutor();
+    ExecutorServiceFactory factory = Executors::newSingleThreadExecutor;
 
-    try {
-      configuration.setExecutorService(executor);
-      Assert.assertSame(OumuamuaConfigurationOutView.instance(configuration).getExecutorService(), executor);
-    } finally {
-      executor.shutdown();
-    }
+    configuration.setExecutorServiceFactory(factory);
+    Assert.assertSame(OumuamuaConfigurationOutView.instance(configuration).getExecutorServiceFactory(), factory);
   }
 
   public void testInstanceCopiesListeners () {

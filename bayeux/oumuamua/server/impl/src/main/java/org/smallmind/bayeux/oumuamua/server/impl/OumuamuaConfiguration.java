@@ -33,7 +33,6 @@
 package org.smallmind.bayeux.oumuamua.server.impl;
 
 import java.util.LinkedList;
-import java.util.concurrent.ExecutorService;
 import org.smallmind.bayeux.oumuamua.server.api.BayeuxService;
 import org.smallmind.bayeux.oumuamua.server.api.Protocol;
 import org.smallmind.bayeux.oumuamua.server.api.Route;
@@ -67,7 +66,7 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private Codec<V> codec;
   @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
-  private ExecutorService executorService;
+  private ExecutorServiceFactory executorServiceFactory;
   @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
   private PerApplicationScope perApplicationScope;
   @View(adapter = ClassNameXmlAdapter.class, idioms = @Idiom(visibility = OUT))
@@ -144,27 +143,30 @@ public class OumuamuaConfiguration<V extends Value<V>> {
   }
 
   /**
-   * @return executor service used for asynchronous work
+   * @return factory used to create the server's executor service, or {@code null} to use the default
    */
-  public ExecutorService getExecutorService () {
+  public ExecutorServiceFactory getExecutorServiceFactory () {
 
-    return executorService;
+    return executorServiceFactory;
   }
 
   /**
-   * Assigns the executor service used for background processing. Threads of a supplied executor inherit no
-   * {@code ScopedValue} binding, so an application that also sets {@link #setPerApplicationScope} must build this
-   * executor so that its threads run inside that scope (for example from the scope instance's
+   * Assigns the factory the server calls once, in its constructor, to create the executor service used for
+   * background processing; the server owns that executor and shuts it down in {@code stop()}. When the factory
+   * is {@code null} (the default), or returns {@code null}, the server builds a virtual-thread-per-task executor
+   * itself. Threads of a factory-built executor
+   * inherit no {@code ScopedValue} binding, so an application that also sets {@link #setPerApplicationScope} must
+   * build the executor so that its threads run inside that scope (for example from the scope instance's
    * {@code boundThreadFactory} or {@code boundExecutor}, which bind that scope without needing one on the
-   * constructing thread; the static {@code PerApplicationScope.wrapThreadFactory} captures the caller's binding and
+   * calling thread; the static {@code PerApplicationScope.wrapThreadFactory} captures the caller's binding and
    * throws {@code MissingPerApplicationScopeException} when there is none); the server only wraps the executor it
    * creates itself.
    *
-   * @param executorService executor service
+   * @param executorServiceFactory factory for the executor service, or {@code null} for the default
    */
-  public void setExecutorService (ExecutorService executorService) {
+  public void setExecutorServiceFactory (ExecutorServiceFactory executorServiceFactory) {
 
-    this.executorService = executorService;
+    this.executorServiceFactory = executorServiceFactory;
   }
 
   /**
