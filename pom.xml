@@ -76,7 +76,7 @@
   <properties>
     <maven.compiler.release>25</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <amqp.client.version>5.28.0</amqp.client.version>
+    <amqp.client.version>5.37.0</amqp.client.version>
     <angus.mail.version>2.0.5</angus.mail.version>
     <artemis.version>2.37.0</artemis.version>
     <asm.version>9.9.1</asm.version>
