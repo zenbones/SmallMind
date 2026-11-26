@@ -911,180 +911,226 @@ juggler.startup();
   waits up to five seconds for it to terminate.
 
 // ==========================================================================
+[[quorum-bucket]]
 == The Bucket Framework
-// ==========================================================================
 
-=== Why It Exists
+A token bucket limits the rate of access to a resource while allowing bursts
+up to its capacity. Each admission consumes a caller-defined quantity of
+tokens, such as a request count or a payload size in bytes. The bucket refills
+continuously up to its capacity.
 
-Rate limiting is the act of deciding, at call time, whether a request
-should be admitted or rejected based on how many requests have come
-before it and how fast they are arriving. A naive counter-per-second
-approach is unfair (an "edge effect" where a client can double its
-burst rate by straddling the second boundary) and rigid (there is no
-notion of allowing a brief spike above the long-term rate).
+Use the `org.smallmind.quorum.bucket` package in `smallmind-quorum`. The same
+artifact contains the API and implementation. Applications wire the bucket
+directly with their own input type and policies.
 
-The *token-bucket algorithm* solves both problems with a single
-metaphor. A bucket holds up to `limit` tokens. Tokens refill at a
-constant rate, up to the capacity ceiling. Each request consumes one
-token (or more, depending on its size). A request is admitted if and
-only if there are enough tokens to cover its cost. The long-term
-admission rate matches the refill rate; bursts are admitted up to the
-bucket's capacity; tokens spent now are not reissued until the refill
-period recharges them.
-
-Quorum's implementation adds two refinements on top of the textbook
-algorithm:
-
-* *Variable cost* -- an input can cost any non-negative number of
-  tokens, not just one. This lets you rate-limit by message size,
-  query complexity, or any other resource-meaningful metric.
-* *Hierarchy* -- a bucket can own child buckets, each indexed by a
-  key. A request must pass *both* the parent bucket and the applicable
-  child bucket. This is how you enforce a global limit and a
-  per-user/per-tenant limit in one pass.
-
-=== Components
-
-==== `TokenBucket<T>`
-
-The main type. Thread-safe via method-level `synchronized`.
-Construction:
+[[quorum-bucket-standalone]]
+=== Standalone Bucket
 
 [source,java]
 ----
-public TokenBucket (
-  BucketQuantifier<T> quantifier,  // how many tokens does this input cost?
-  BucketSelector<T> selector,      // which child bucket should this input also consult?
-  double limit,                    // maximum token capacity (also the starting balance).
-  double refillQuantity,           // number of tokens added each refillRate.
-  Stint refillRate)                // duration of one refill period.
-----
+BucketPolicy policy = new WholeNumberPolicy(100, 100, Stint.of(1, TimeUnit.SECONDS));
+TokenBucket<Void, Request> bucket = new TokenBucket<>(policy, request -> 1);
 
-Operation:
-
-* `boolean allowed(T input)` -- refills based on elapsed time, then
-  checks token cost against the available balance and, if sufficient,
-  recursively defers to the child bucket identified by
-  `selector.selection(input)`. On success, tokens are deducted; on
-  failure, the balance is unchanged and `false` is returned.
-* `void add(BucketKey<T> key, BucketFactory<T> factory)` -- registers
-  a child bucket. The factory is invoked lazily; if `key` is already
-  registered, the call is a no-op.
-
-==== `BucketQuantifier<T>`
-
-[source,java]
-----
-public interface BucketQuantifier<T> {
-  double quantity (T input);
-}
-----
-
-The strategy that maps an input to its token cost. A return of `0.0`
-is free; a value greater than or equal to `limit` can never be
-admitted.
-
-==== `BucketSelector<T>`
-
-[source,java]
-----
-public interface BucketSelector<T> {
-  BucketKey<T> selection (T input);
-}
-----
-
-Picks the child bucket key that also governs the input. Returning
-`null` means "no child applies" -- the input is judged by the parent
-alone.
-
-==== `BucketKey<T>`
-
-A marker interface; implementations must override `equals()` and
-`hashCode()` because the key is stored in a `HashMap`.
-
-==== `BucketFactory<T>`
-
-A lazy factory for child buckets:
-
-[source,java]
-----
-public interface BucketFactory<T> {
-  TokenBucket<T> create();
-}
-----
-
-=== Example: Global Rate Limiting
-
-[source,java]
-----
-// 100 requests per second, no burst beyond the steady rate.
-TokenBucket<Request> bucket = new TokenBucket<>(
-  request -> 1.0,                 // every request costs one token
-  request -> null,                // no child bucket
-  100.0,                          // capacity
-  100.0,                          // refill amount
-  new Stint(1, TimeUnit.SECONDS));// per refill period
-
-if (bucket.allowed(incoming)) {
-  handle(incoming);
+if (bucket.allowed(request)) {
+  handle(request);
 } else {
-  reject(incoming, "too many requests");
+  reject(request, "too many requests");
 }
 ----
 
-=== Example: Bursty, Size-Weighted Rate Limiting
+The bucket starts with 100 tokens and earns 100 per second. The quantifier
+runs on each call and can charge a different amount for each request.
+
+[[quorum-bucket-multiple-limits]]
+=== Burst And Sustained Limits
+
+Put two or more limits in one `WholeNumberPolicy` to enforce them together.
 
 [source,java]
 ----
-// 1 MB/s sustained throughput, but tolerate bursts up to 10 MB.
-TokenBucket<Payload> bucket = new TokenBucket<>(
-  payload -> (double)payload.sizeInBytes(),
-  payload -> null,
-  10_000_000.0,                        // 10 MB capacity -> burst
-  1_000_000.0,                         // 1 MB added per...
-  new Stint(1, TimeUnit.SECONDS));     // ...one second
+BucketPolicy policy = new WholeNumberPolicy(
+  new BucketLimit(20, 20, Stint.of(1, TimeUnit.SECONDS)),
+  new BucketLimit(1_000, 1_000, Stint.of(1, TimeUnit.MINUTES)));
+TokenBucket<Void, Request> bucket = new TokenBucket<>(policy, request -> 1);
 ----
 
-=== Example: Global Cap Plus Per-Tenant Cap
+The short limit constrains bursts and the long limit constrains sustained
+traffic. An admission must cover the full cost in every limit. A denial
+spends nothing.
+
+The three-argument `BucketLimit` and `WholeNumberPolicy` constructors start
+full and refill continuously. The five-argument `BucketLimit` constructor
+also accepts an initial balance and a `BucketLimit.RefillStyle`. With
+`INTERVAL`, the limit credits its refill quantity at each full period
+after the balance was created. Continuous refill accrues proportionally
+throughout the period.
+
+[[quorum-bucket-keyed]]
+=== Keyed Buckets
 
 [source,java]
 ----
-record TenantKey(String tenantId) implements BucketKey<Request> { }
+BucketPolicy policy = new WholeNumberPolicy(10_000, 1_000, Stint.of(1, TimeUnit.SECONDS));
+TokenBucket<String, Request> bucket = new TokenBucket<>(
+  10_000,
+  request -> InherentBucketKey.of(request.tenantId(), request.principalId()),
+  (key, request) -> request.payloadSizeInBytes(),
+  key -> policy);
 
-// Parent: 1000 rps across all tenants.
-TokenBucket<Request> parent = new TokenBucket<>(
-  req -> 1.0,
-  req -> new TenantKey(req.tenantId()),
-  1000.0, 1000.0, new Stint(1, TimeUnit.SECONDS));
-
-// For every tenant, register a 100 rps child.
-for (String tenantId : tenants) {
-  parent.add(new TenantKey(tenantId),
-    () -> new TokenBucket<>(
-      req -> 1.0,
-      req -> null,
-      100.0, 100.0, new Stint(1, TimeUnit.SECONDS)));
-}
-
-// At call time: an input has to pass both levels.
-if (parent.allowed(request)) {
+if (bucket.allowed(request)) {
   handle(request);
 }
 ----
 
-=== Notes
+In `TokenBucket<S, T>`, `S` is the segment type and `T` is the request
+type. The selector maps the input to a complete `BucketKey<S, ?>` path. Its
+ordered segments identify children under successive parents. Use identifiers
+with stable equality and hash codes. Use `Void` for `S` in a standalone
+bucket and `Object` if the levels of a tree use unrelated segment types.
 
-* The bucket uses `System.nanoTime()` for all refill calculations, so
-  wall-clock changes do not perturb it.
-* Each call to `allowed()` takes one `System.nanoTime()` reading and
-  reuses it for the entire hierarchy so that parent and child see a
-  consistent clock.
-* Children are created lazily through the factory; an unused key does
-  not cost a bucket instance.
-* There is no background thread: refills are computed on demand.
-* Because `allowed()` is `synchronized`, contention on a very hot
-  bucket can become measurable. Prefer a shallow hierarchy and
-  selectors that return `null` when no child is needed.
+`BucketKey` is abstract. `InherentBucketKey` is the provided implementation,
+and `InherentBucketKey.of(...)` builds a key from its segments. A key copies
+its segment list and exposes it as an unmodifiable `List<S>`. Two keys are
+equal when their segments are equal.
+
+`InherentBucketKey.root()` returns the empty path with the segment type inferred
+from context. To share a default balance among unmatched inputs, have the
+selector return this path for them and configure a target policy for that
+key.
+
+To attach extra data to a key, such as a tenant tier that the policy factory
+reads, extend `BucketKey` and implement `ancestor(int)` to return the key for
+the first `length` segments. Override `equals` and `hashCode` as well if the
+extra data should distinguish keys. The quantifier and the direct factory
+receive the key the selector returned. The shared factory receives the keys
+that `ancestor(int)` returns for each prefix, except the root. `removeIfFull` accepts any
+`BucketKey` with the right segment type.
+
+The quantifier receives the resolved key and the original input. The tree
+creates any missing path nodes on first use and calls the factory for the
+selected key's policy. Routing nodes get a direct balance when an input
+selects them and the factory returns a standard policy. With this
+constructor each admission charges only the selected bucket. Principals
+under the same tenant have independent
+balances, and the same principal ID in a different tenant has its own
+balance. In this example, each principal can burst up to 10,000 bytes and
+earns 1,000 bytes of capacity per second.
+
+[[quorum-bucket-shared-quotas]]
+=== Shared Quotas
+
+Pass a second factory for quotas that apply to entire subtrees. For
+example, the following tree charges a tenant quota as well as the
+principal quota.
+
+[source,java]
+----
+BucketPolicy perPrincipal = new WholeNumberPolicy(20, 20, Stint.of(1, TimeUnit.SECONDS));
+BucketPolicy perTenant = new WholeNumberPolicy(100, 100, Stint.of(1, TimeUnit.SECONDS));
+TokenBucket<String, Request> bucket = new TokenBucket<>(
+  10_000,
+  request -> InherentBucketKey.of(request.tenantId(), request.principalId()),
+  (key, request) -> 1,
+  key -> perPrincipal,
+  prefix -> prefix.segments().size() == 1 ? perTenant : UnlimitedPolicy.instance());
+----
+
+The shared factory runs when the tree creates a prefix and receives that
+prefix as a key. The root prefix is always the empty `InherentBucketKey`. The root policy
+is resolved during construction. A shared policy applies to requests
+that select its prefix or any descendant, so a shared policy at the root
+applies to the entire tree. Both factories accept the same policy types.
+
+[cols="1,2,2",options="header"]
+|===
+| Policy | Direct factory | Shared factory
+| `WholeNumberPolicy` | Charges a balance for the selected key. | Charges a balance shared by the prefix and its descendants.
+| `UnlimitedPolicy.instance()` | Admits the key and applies any shared policies to the original cost. | Leaves the prefix unrestricted.
+| `RejectedPolicy.instance()` | Rejects requests that select the key. | Rejects requests that select the prefix or any descendant.
+|===
+
+Legacy `null` factory results are normalized to `RejectedPolicy.instance()`
+for selected keys and `UnlimitedPolicy.instance()` for shared prefixes.
+Every applicable standard limit uses the same request cost. They debit
+together if all policies allow it. Unlimited and rejected policies carry
+no balance or quota lock. A request governed entirely by unlimited
+policies needs no quota arithmetic.
+
+[[quorum-bucket-decisions]]
+=== Admission Decisions
+
+Use `tryConsume(input)` instead of `allowed(input)` when the caller needs
+the remaining balance or a retry delay. Both methods attempt a debit.
+
+[source,java]
+----
+BucketDecision decision = bucket.tryConsume(request);
+
+if (decision.allowed()) {
+  handle(request);
+} else if (decision.retryAfterNanos() > 0) {
+  long retrySeconds = Math.ceilDiv(decision.retryAfterNanos(), 1_000_000_000L);
+  rejectWithRetryAfter(request, retrySeconds);
+} else {
+  reject(request, decision.outcome());
+}
+----
+
+`remainingTokens()` returns the smallest whole-token balance among the
+applicable limits after the attempt. It returns `-1` when the request
+has no applicable balance or its key could not be admitted to the tree.
+A finite retry delay is rounded up to the first nanosecond when every
+limit could cover the same cost,
+assuming no intervening debits. It is capped at `Long.MAX_VALUE`.
+The retry delay is `-1` when refill alone cannot make the attempt succeed.
+
+[cols="1,3",options="header"]
+|===
+| Outcome | Meaning
+| `ALLOWED` | All applicable limits covered the cost.
+| `RATE_LIMITED` | At least one balance was too low. An exhausted fixed budget has no finite retry delay.
+| `COST_EXCEEDS_CAPACITY` | The cost exceeds at least one limit's capacity.
+| `KEY_REJECTED` | The selector returned `null`, or a direct or shared policy rejected the key.
+| `NODE_LIMIT_REACHED` | The path requires more child nodes than the tree can hold.
+|===
+
+[[quorum-bucket-admission]]
+=== Admission, Ownership, And Limits
+
+* Costs, capacities, and refill quantities are non-negative whole-token
+  values. Choose a smaller token unit if the application needs fractional
+  costs. The refill period must be positive. A zero refill quantity gives
+  the bucket a fixed budget. Zero-cost inputs can pass an empty balance,
+  and a request costing exactly the available balance can pass.
+* A null selector result or a rejected policy denies admission. A
+  negative cost throws `IllegalArgumentException`. Exceptions from
+  caller-supplied strategies propagate to the caller.
+* The maximum child-node count applies to the entire tree and includes
+  routing nodes. The root is always present. A path that needs more nodes
+  than remain is denied, and existing paths can still be used.
+* Applications can reclaim a childless node by calling `removeIfFull(key)`.
+  All limits owned by that node, including its shared quota, must start
+  full and be full at removal. A limit with periodic credits retains its
+  refill phase and prevents removal. Remove empty routing parents separately
+  after their children. A later admission to a removed key resolves its
+  policies again.
+* Each root owns its tree and balances in the current JVM. The selector and
+  quantifier must support concurrent calls. First-time bucket creation is
+  serialized per tree, so factories should return promptly and must avoid
+  calling back into that tree. Targets without shared quotas update all
+  their limits together with compare-and-set. Admissions with shared quotas
+  take the applicable quota locks in root-to-leaf order. Boolean admission can
+  stop at the first denial. Detailed admission evaluates every applicable limit
+  to report the remaining balance and retry delay.
+* Standard policies calculate refill from monotonic elapsed time and
+  preserve fractional accrual between whole-token debits. Each limit uses primitive arithmetic when
+  the period and scaled capacity fit in a `long`, with exact
+  arbitrary-precision arithmetic for larger configurations.
+  Unshared fixed budgets update a single atomic token count. An unshared
+  root with one continuous limit can instead update a single atomic
+  timestamp when each token accrues in a whole number of nanoseconds and
+  the time to fill the bucket fits in a `long`.
+  A denied call spends no tokens. There is no startup or shutdown step.
 
 // ==========================================================================
 == The Namespace Framework
@@ -1313,8 +1359,7 @@ relational database cluster:
   connections through to callers. Alternatively, a single `ComponentPool`
   sits over the juggler, acquiring pooled connections for reuse.
 . *Rate limiting at the edge* -- a `TokenBucket` in front of the pool
-  enforces global and per-tenant request caps, so a runaway client
-  cannot drain the entire connection pool.
+  can meter requests by tenant before they reach the connection pool.
 . *JNDI-published configuration* -- `JavaContext` looks up the data
   source definitions from a central LDAP directory, so the application
   does not hard-code host names.
@@ -1329,8 +1374,8 @@ resources at once:
 
 [source,java]
 ----
-TokenBucket<Void> gate = new TokenBucket<>(
-  v -> 1.0, v -> null, 50.0, 50.0, new Stint(1, TimeUnit.SECONDS));
+TokenBucket<Void, Void> gate = new TokenBucket<>(
+  new WholeNumberPolicy(50, 50, Stint.of(1, TimeUnit.SECONDS)), input -> 1);
 
 ComponentPool<RemoteService> pool = /* ... as earlier ... */;
 
@@ -1351,7 +1396,7 @@ the callers that got past the gate.
 |===
 | Framework | Startup | Shutdown
 
-| `bucket`    | `new TokenBucket(...)`; optional `add(key, factory)` calls. | Garbage collection; no resources to release.
+| `bucket`    | `new TokenBucket(...)`. Keyed buckets are created on demand. | Garbage collection.
 | `juggler`   | `initialize()`, `startup()`.                                | `shutdown()`, `deconstruct()`.
 | `pool.simple`  | `new ComponentPool(factory, config)`; optional `register()`. | `close()` (blocks until all borrowed components return).
 | `pool.complex` | `new ComponentPool(...)`, optional `setPerApplicationScope(scope)` to bind the pool's own threads, `startup()`; optional event/JMX registration. | `shutdown()` (runs factory shutdown, terminates pins, deconstructs factory).
@@ -1361,8 +1406,7 @@ the callers that got past the gate.
 == Further Reading in the Source
 
 * `pom.xml` -- the module's Maven coordinates and dependencies.
-* `bucket/TokenBucket.java` -- the entire rate-limiter in a single
-  file; read it for the clearest picture of the refill mathematics.
+* `bucket/TokenBucket.java` -- key resolution, node creation, and refill arithmetic.
 * `juggler/Juggler.java` -- the rotation algorithm, the blacklist
   handling, and the `recoverProviders` implementation.
 * `pool/complex/ComponentPinManager.java` -- the heart of the complex

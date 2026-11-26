@@ -88,7 +88,7 @@ public class EnumUtility {
         }
 
         if (!state.equals(LetterState.OTHER)) {
-          if (separatorPending && (fieldBuilder.length() > 0)) {
+          if (separatorPending && (!fieldBuilder.isEmpty())) {
             fieldBuilder.append('_');
           }
           separatorPending = false;

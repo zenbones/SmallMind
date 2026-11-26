@@ -33,25 +33,21 @@
 package org.smallmind.quorum.bucket;
 
 /**
- * Strategy that translates an input value into the number of tokens it costs.
- * <p>
- * Implementations allow the token cost to vary per input — for example, weighting
- * a request by its payload size or priority — rather than charging a fixed amount
- * for every item that passes through a {@link TokenBucket}.
+ * Determines the cost of the original input in the selected bucket's token units.
+ * Implementations must support concurrent calls and return a non-negative quantity.
  *
- * @param <T> the type of value whose cost is being calculated
+ * @param <S> the path segment type
+ * @param <T> the input type
  */
-public interface BucketQuantifier<T> {
+@FunctionalInterface
+public interface BucketQuantifier<S, T> {
 
   /**
-   * Returns the token cost for {@code input}.
-   * <p>
-   * The returned value must be non-negative. A value of {@code 0} means the input
-   * is always free; a value larger than the bucket's capacity means the input can
-   * never be permitted.
+   * Returns the token cost of the input.
    *
-   * @param input the value whose token cost is to be calculated
-   * @return the number of tokens to deduct from the bucket for this input
+   * @param key   the key resolved by the selector for the input
+   * @param input the original input
+   * @return the non-negative cost in tokens
    */
-  double quantity (T input);
+  long quantity (BucketKey<S, ?> key, T input);
 }

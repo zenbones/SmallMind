@@ -33,20 +33,24 @@
 package org.smallmind.quorum.bucket;
 
 /**
- * Supplier of {@link TokenBucket} instances used when lazily creating child buckets.
- * <p>
- * Implementations configure and return a fully initialised bucket ready for use.
- * A factory is passed to {@link TokenBucket#add(BucketKey, BucketFactory)} so that
- * the parent bucket can defer construction of child entries until they are first needed.
+ * Supplies the policy for a selected key or a shared path prefix.
+ * Return {@link WholeNumberPolicy}, {@link UnlimitedPolicy#instance()}, or
+ * {@link RejectedPolicy#instance()}. A rejected shared policy also rejects
+ * descendants of its prefix. Legacy null results are treated as rejected
+ * for selected keys and unlimited for shared prefixes. Calls within a tree
+ * are serialized.
+ * Implementations should be fast and must not reenter the tree.
  *
- * @param <T> the type of value governed by the produced buckets
+ * @param <S> the path segment type
  */
-public interface BucketFactory<T> {
+@FunctionalInterface
+public interface PolicyFactory<S> {
 
   /**
-   * Constructs and returns a new, fully configured {@link TokenBucket}.
+   * Returns the policy for the key.
    *
-   * @return a ready-to-use token bucket
+   * @param key the selected key, or the shared prefix (the empty root path for the root)
+   * @return the policy to apply
    */
-  TokenBucket<T> create ();
+  BucketPolicy createPolicy (BucketKey<S, ?> key);
 }

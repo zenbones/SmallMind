@@ -32,15 +32,62 @@
  */
 package org.smallmind.quorum.bucket;
 
-/**
- * Marker type for keys that identify child buckets in a {@link TokenBucket} hierarchy.
- * <p>
- * Concrete key types must implement meaningful {@code equals} and {@code hashCode}
- * so that {@link TokenBucket#add(BucketKey, BucketFactory)} and the internal child
- * lookup can correctly match keys across calls.
- *
- * @param <T> the type of value associated with the bucket this key identifies
- */
-public interface BucketKey<T> {
+import java.util.List;
 
+/**
+ * An ordered path from the root to the bucket selected for an input.
+ * Segments must have stable equality and hash codes. An empty path selects the root.
+ *
+ * @param <S> the type of the path segments
+ * @param <B> the concrete key type, returned when deriving ancestor paths
+ */
+public abstract class BucketKey<S, B extends BucketKey<S, B>> {
+
+  private final List<S> segments;
+
+  public BucketKey (List<S> segments) {
+
+    this.segments = List.copyOf(segments);
+  }
+
+  /**
+   * Returns the key for the leading {@code length} segments of this path, carrying any additional
+   * state of the concrete type. {@link TokenBucket} calls this to name each prefix of a selected key
+   * for the shared policy factory, with {@code length} from 1 through {@code segments().size()}. The
+   * empty root path is supplied by the bucket itself and is never requested here.
+   *
+   * @param length the number of leading segments to retain
+   * @return the key for that prefix
+   */
+  public abstract B ancestor (int length);
+
+  /**
+   * Returns the immutable ordered segments of this path.
+   */
+  public List<S> segments () {
+
+    return segments;
+  }
+
+  /**
+   * Keys are equal when their segments are equal. Subclasses carrying additional state should override
+   * this method and {@link #hashCode()} consistently.
+   */
+  @Override
+  public boolean equals (Object obj) {
+
+    return (this == obj) || ((obj instanceof BucketKey<?, ?> other) && segments.equals(other.segments()));
+  }
+
+  @Override
+  public int hashCode () {
+
+    return segments.hashCode();
+  }
+
+  @Override
+  public String toString () {
+
+    return "BucketKey[segments=" + segments + "]";
+  }
 }
