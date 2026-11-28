@@ -32,9 +32,7 @@
  */
 package org.smallmind.web.jersey.page;
 
-import java.lang.reflect.Method;
 import jakarta.ws.rs.container.ContainerResponseContext;
-import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import org.mockito.Mockito;
@@ -43,26 +41,14 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
- * Drives {@link PageRangeResponseFilter} with a mocked {@link ResourceInfo}/{@link ContainerResponseContext}
- * to verify the {@code Content-Range} header and 200/206/416 status selection for a {@link PageRange}-annotated
- * method returning a {@link Page}.
+ * Drives {@link PageRangeFilter} with a mocked {@link ContainerResponseContext} to verify the
+ * {@code Content-Range} header and 200/206/416 status selection for a {@link Page} response.
  */
 @Test(groups = "unit")
-public class PageRangeResponseFilterTest {
-
-  @PageRange
-  public Page<String> annotatedResourceMethod () {
-
-    return null;
-  }
+public class PageRangeFilterTest {
 
   private MultivaluedMap<String, Object> runFilter (Page<String> page)
     throws Exception {
-
-    Method method = PageRangeResponseFilterTest.class.getMethod("annotatedResourceMethod");
-
-    ResourceInfo resourceInfo = Mockito.mock(ResourceInfo.class);
-    Mockito.when(resourceInfo.getResourceMethod()).thenReturn(method);
 
     MultivaluedMap<String, Object> headers = new MultivaluedHashMap<>();
     ContainerResponseContext responseContext = Mockito.mock(ContainerResponseContext.class);
@@ -70,9 +56,7 @@ public class PageRangeResponseFilterTest {
     Mockito.when(responseContext.getEntity()).thenReturn(page);
     Mockito.when(responseContext.getHeaders()).thenReturn(headers);
 
-    PageRangeResponseFilter filter = new PageRangeResponseFilter();
-    filter.resourceInfo = resourceInfo;
-    filter.filter(null, responseContext);
+    new PageRangeFilter().filter(null, responseContext);
 
     return new VerificationHeaders(headers, responseContext);
   }

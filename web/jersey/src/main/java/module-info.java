@@ -69,7 +69,6 @@ module org.smallmind.web.jersey {
 
   opens org.smallmind.web.jersey.aop to org.glassfish.hk2.locator, org.glassfish.hk2.utilities, org.glassfish.jersey.core.server, jakarta.xml.bind, tools.jackson.databind;
   opens org.smallmind.web.jersey.cors.spring to spring.core, spring.beans;
-  opens org.smallmind.web.jersey.page to org.glassfish.hk2.locator, org.glassfish.hk2.utilities, org.glassfish.jersey.core.server;
   opens org.smallmind.web.jersey.proxy.spring to spring.core, spring.beans;
   opens org.smallmind.web.jersey.spring to spring.core, spring.beans;
 }

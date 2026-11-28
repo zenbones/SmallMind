@@ -32,23 +32,24 @@
  */
 package org.smallmind.web.jersey.page;
 
-import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
+import jakarta.ws.rs.NameBinding;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 /**
- * Jersey resource configuration extension that registers {@link PageRangeResponseFilter} for Content-Range header
- * generation.
+ * Verifies the JAX-RS name-binding wiring that restricts {@link PageRangeFilter} to {@link PageRange}-annotated
+ * resource methods: {@link PageRange} must be a {@link NameBinding} annotation and the filter must carry it.
  */
-public class PageRangeResponseExtension extends PrioritizedResourceConfigExtension {
+@Test(groups = "unit")
+public class PageRangeBindingTest {
 
-  /**
-   * Registers {@link PageRangeResponseFilter} with the supplied Jersey resource configuration.
-   *
-   * @param resourceConfig the Jersey resource configuration to extend
-   */
-  @Override
-  public void apply (ResourceConfig resourceConfig) {
+  public void testPageRangeIsNameBinding () {
 
-    resourceConfig.register(PageRangeResponseFilter.class, getPriority());
+    Assert.assertNotNull(PageRange.class.getAnnotation(NameBinding.class));
+  }
+
+  public void testFilterIsBoundToPageRange () {
+
+    Assert.assertNotNull(PageRangeFilter.class.getAnnotation(PageRange.class));
   }
 }

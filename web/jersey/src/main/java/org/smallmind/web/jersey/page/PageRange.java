@@ -39,11 +39,12 @@ import java.lang.annotation.Target;
 import jakarta.ws.rs.NameBinding;
 
 /**
- * Method-level JAX-RS name-binding annotation that triggers {@link PageRangeResponseFilter} to add Content-Range
- * headers to paginated responses.
+ * JAX-RS name-binding annotation that applies {@link PageRangeFilter} to the annotated resource method, adding
+ * Content-Range headers to paginated responses. The filter class carries this annotation, so it runs only for bound
+ * methods.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
+@Target({ElementType.TYPE, ElementType.METHOD})
 @NameBinding
 public @interface PageRange {
 

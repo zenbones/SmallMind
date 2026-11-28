@@ -32,92 +32,49 @@
  */
 package org.smallmind.web.jersey.aop;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.concurrent.ConcurrentHashMap;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
-import jakarta.ws.rs.container.ResourceInfo;
-import jakarta.ws.rs.core.Context;
-import jakarta.xml.bind.annotation.adapters.XmlAdapter;
-import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
- * Jersey container filter that registers the {@link JsonEntity} type before request processing and marshals the
- * response entity through any declared {@link XmlJavaTypeAdapter} on completion.
+ * Jersey container filter, registered per {@link ResourceMethod}-annotated resource method by
+ * {@link ResourceMethodDynamicFeature}, that registers the method's {@link JsonEntity} type before request processing
+ * and clears all thread-local entity state on completion.
  */
 public class ResourceMethodFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
-  private static final ConcurrentHashMap<Class<? extends XmlAdapter>, XmlAdapter> ADAPTER_MAP = new ConcurrentHashMap<>();
-
-  @Context
-  ResourceInfo resourceInfo;
+  private final Class<? extends JsonEntity> entityClass;
 
   /**
-   * Stores the {@link JsonEntity} class declared by any {@link ResourceMethod} annotation on the matched resource
-   * method so it is available for parameter resolution during the request.
+   * @param entityClass the {@link JsonEntity} class declared by the {@link ResourceMethod} annotation
+   */
+  public ResourceMethodFilter (Class<? extends JsonEntity> entityClass) {
+
+    this.entityClass = entityClass;
+  }
+
+  /**
+   * Stores the {@link JsonEntity} class for the matched resource method so it is available for parameter resolution
+   * during the request.
    *
    * @param requestContext the incoming container request context
    */
   @Override
   public void filter (ContainerRequestContext requestContext) {
 
-    ResourceMethod resourceMethod;
-
-    if ((resourceMethod = resourceInfo.getResourceMethod().getAnnotation(ResourceMethod.class)) != null) {
-      EntityTranslator.storeEntityType(resourceMethod.value());
-    }
+    EntityTranslator.storeEntityType(entityClass);
   }
 
   /**
-   * Applies any {@link XmlJavaTypeAdapter} declared on the resource method to the outgoing response entity, then
-   * clears all thread-local entity state.
+   * Clears all thread-local entity state.
    *
    * @param requestContext  the container request context
-   * @param responseContext the container response context whose entity may be replaced
-   * @throws IOException if the adapter cannot be instantiated or the marshal operation fails
+   * @param responseContext the container response context
    */
   @Override
-  public void filter (ContainerRequestContext requestContext, ContainerResponseContext responseContext)
-    throws IOException {
+  public void filter (ContainerRequestContext requestContext, ContainerResponseContext responseContext) {
 
-    try {
-
-      Method resourceMethod;
-
-      if ((resourceMethod = resourceInfo.getResourceMethod()) != null) {
-
-        XmlJavaTypeAdapter xmlJavaTypeAdapter;
-
-        if ((xmlJavaTypeAdapter = resourceMethod.getAnnotation(XmlJavaTypeAdapter.class)) != null) {
-
-          Class<? extends XmlAdapter> xmlAdapterClass = xmlJavaTypeAdapter.value();
-          XmlAdapter xmlAdapter;
-
-          if ((xmlAdapter = ADAPTER_MAP.get(xmlAdapterClass)) == null) {
-            synchronized (ADAPTER_MAP) {
-              if ((xmlAdapter = ADAPTER_MAP.get(xmlAdapterClass)) == null) {
-                try {
-                  ADAPTER_MAP.put(xmlAdapterClass, xmlAdapter = xmlAdapterClass.getConstructor().newInstance());
-                } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException exception) {
-                  throw new IOException(exception);
-                }
-              }
-            }
-          }
-
-          try {
-            responseContext.setEntity(xmlAdapter.marshal(responseContext.getEntity()));
-          } catch (Exception exception) {
-            throw new IOException(exception);
-          }
-        }
-      }
-    } finally {
-      EntityTranslator.clearEntity();
-    }
+    EntityTranslator.clearEntity();
   }
 }

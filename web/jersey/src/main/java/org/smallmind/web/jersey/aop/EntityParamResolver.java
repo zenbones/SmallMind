@@ -56,7 +56,7 @@ public class EntityParamResolver {
     /**
      * Returns the resolution priority for this provider.
      *
-     * @return {@link PriorityType#NORMAL}
+     * @return {@link Priority#NORMAL}
      */
     @Override
     public PriorityType getPriority () {

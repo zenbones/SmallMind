@@ -864,7 +864,9 @@ building blocks are:
     `JsonCodec` from `web-json-scaffold`), `ThrowableExceptionMapper` (catch-all
     mapper that tries a list of `ConcreteExceptionMapper` delegates then falls
     back to a JSON `Fault` with HTTP 500), `XmlAdapterParamConverterProvider`
-    (makes JAXB adapters work for path and query parameters), and a
+    (makes JAXB adapters work for path and query parameters),
+    `XmlJavaTypeAdapterDynamicFeature` (marshals the response of resource methods
+    annotated with `@XmlJavaTypeAdapter`), and a
     `FaultTranslatingClientResponseFilter` for the client side. Each has a
     sibling `…Extension` class that registers it.
 
@@ -881,7 +883,9 @@ building blocks are:
     multipart feature).
 
 `org.smallmind.web.jersey.page`::
-    `@PageRange` name-binding annotation + `PageRangeResponseFilter`. The
+    `@PageRange` name-binding annotation and `PageRangeFilter` (registered by
+    `PageRangeExtension`), which runs only for `@PageRange`-annotated resource
+    methods. The
     filter recognises `org.smallmind.web.json.scaffold.util.Page` return
     values and sets `Content-Range` plus HTTP 200/206/416 appropriately.
 
@@ -951,7 +955,7 @@ public Page<UserOut> listUsers(@QueryParam("firstResult") long firstResult,
 }
 ----
 
-`PageRangeResponseFilter` inspects the returned `Page` and stamps a
+`PageRangeFilter` inspects the returned `Page` and stamps a
 `Content-Range: items firstResult-last/totalResults` header, converts the
 body to the raw values array, and picks status 206 when the response covers a
 proper subrange, 200 when it is complete, and 416 when the requested range
@@ -974,8 +978,11 @@ public UserOut create(@EntityParam("username") String username,
 }
 ----
 
-The `ResourceMethodFilter` JAX-RS request filter deserialises the body into a
-`JsonEntity`, stashes it in a thread-local, and
+`EntityParamExtension` registers a `ResourceMethodDynamicFeature` that attaches
+`ResourceMethodFilter` only to `@ResourceMethod`-annotated resource methods, so
+methods without the annotation are unaffected. The filter records the declared
+`JsonEntity` type. The body is deserialised into that
+`JsonEntity`, held in a thread-local, and
 `EntityParamResolver.EntityParamValueParamProvider` extracts each named
 parameter from the entity when Jersey builds the argument array. When
 `validate=true`, `ResourceMethodAspect` (AspectJ) runs Jakarta Bean Validation
@@ -984,6 +991,13 @@ failed constraint.
 
 `@Validated` applies the same parameter/return-value validation without
 requiring `@ResourceMethod`.
+
+A resource method annotated with `@XmlJavaTypeAdapter` has its response entity
+marshalled through that adapter. `XmlAdapterParamExtension` registers an
+`XmlJavaTypeAdapterDynamicFeature` that attaches the adapter filter only to
+annotated methods, independent of `@ResourceMethod` and of `EntityParamExtension`. The adapter needs a public
+no-argument constructor; a method whose adapter cannot be instantiated fails at
+startup with `IllegalStateException`.
 
 === Client proxies
 
@@ -1037,7 +1051,7 @@ thread with neither bound fails with `MissingPerApplicationContextException`.
 <bean class="org.smallmind.web.jersey.json.XmlAdapterParamExtension"/>
 <bean class="org.smallmind.web.jersey.aop.EntityParamExtension"/>
 <bean class="org.smallmind.web.jersey.multipart.MultiPartFeatureExtension"/>
-<bean class="org.smallmind.web.jersey.page.PageRangeResponseExtension"/>
+<bean class="org.smallmind.web.jersey.page.PageRangeExtension"/>
 <bean class="org.smallmind.web.jersey.cors.spring.CorsExtension">
   <constructor-arg value="Content-Type"/>
   <constructor-arg value=""/>
@@ -1090,11 +1104,10 @@ xref:README.adoc#module-path[Module Path And Classpath] for the repository-wide 
   an application that weaves them, and that application supplies
   `org.aspectj:aspectjrt` and, on a module path, requires `org.aspectj.runtime`
   itself.
-* It opens `org.smallmind.web.jersey.aop` and `org.smallmind.web.jersey.page` to
+* It opens `org.smallmind.web.jersey.aop` to
   `org.glassfish.hk2.locator`, `org.glassfish.hk2.utilities`, and
   `org.glassfish.jersey.core.server`, because HK2 injects non-public members of
-  `EntityAwareContextResolver`, `EntityParamResolver`, `ResourceMethodFilter`, and
-  `PageRangeResponseFilter`. `org.smallmind.web.jersey.aop` is also opened to
+  `EntityAwareContextResolver` and `EntityParamResolver`. It is also opened to
   `jakarta.xml.bind` and `tools.jackson.databind` for `Envelope`. The three Spring
   packages (`spring`, `proxy.spring`, `cors.spring`) are opened to `spring.core` and
   `spring.beans`. Compiling the module reports `[module] module not found` for the
@@ -1699,7 +1712,7 @@ CORS preflight still fails::
     before resource method matching.
 
 `@PageRange` returns the wrong status code::
-    `PageRangeResponseFilter` picks 206 when the response covers a proper
+    `PageRangeFilter` picks 206 when the response covers a proper
     subrange, 200 when it is complete, and 416 when the requested range is
     out of bounds. Check that the `Page` you return has the correct
     `firstResult`, `resultSize`, and `totalResults` values.

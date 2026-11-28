@@ -36,7 +36,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import jakarta.ws.rs.NameBinding;
 
 /**
  * Marks a Jersey resource method as accepting its arguments through a proxied {@link JsonEntity} body, optionally
@@ -44,7 +43,6 @@ import jakarta.ws.rs.NameBinding;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-@NameBinding
 public @interface ResourceMethod {
 
   /**

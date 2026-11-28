@@ -35,22 +35,18 @@ package org.smallmind.web.jersey.page;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
-import jakarta.ws.rs.container.ResourceInfo;
-import jakarta.ws.rs.core.Context;
 import org.smallmind.web.json.scaffold.util.Page;
 
 /**
- * JAX-RS response filter that adds a {@code Content-Range} header and adjusts the HTTP status for resource methods
- * annotated with {@link PageRange} that return a {@link Page}.
+ * JAX-RS response filter that adds a {@code Content-Range} header and adjusts the HTTP status for responses carrying
+ * a {@link Page}. It is name-bound to {@link PageRange} and so runs only for resource methods carrying that annotation.
  */
-public class PageRangeResponseFilter implements ContainerResponseFilter {
+@PageRange
+public class PageRangeFilter implements ContainerResponseFilter {
 
   public static int HTTP_DATA_COMPLETE = 200;
   public static int HTTP_DATA_INCOMPLETE = 206;
   public static int HTTP_DATA_OUT_OF_RANGE = 416;
-
-  @Context
-  ResourceInfo resourceInfo;
 
   /**
    * Inspects the response entity and, when applicable, writes a {@code Content-Range} records header and sets the
@@ -64,7 +60,7 @@ public class PageRangeResponseFilter implements ContainerResponseFilter {
 
     Class<?> entityClass;
 
-    if ((resourceInfo.getResourceMethod() != null) && ((resourceInfo.getResourceMethod().getAnnotation(PageRange.class)) != null) && ((entityClass = responseContext.getEntityClass()) != null) && Page.class.isAssignableFrom(entityClass)) {
+    if (((entityClass = responseContext.getEntityClass()) != null) && Page.class.isAssignableFrom(entityClass)) {
 
       Page<?> page = (Page<?>)responseContext.getEntity();
 

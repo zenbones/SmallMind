@@ -37,12 +37,14 @@ import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
 /**
  * Jersey resource configuration extension that registers {@link XmlAdapterParamConverterProvider} for
- * JAXB-adapter-based parameter conversion.
+ * JAXB-adapter-based parameter conversion and {@link XmlJavaTypeAdapterDynamicFeature} for JAXB-adapter-based
+ * response marshalling.
  */
 public class XmlAdapterParamExtension extends PrioritizedResourceConfigExtension {
 
   /**
-   * Registers {@link XmlAdapterParamConverterProvider} with the supplied Jersey resource configuration.
+   * Registers {@link XmlAdapterParamConverterProvider} and {@link XmlJavaTypeAdapterDynamicFeature} with the supplied
+   * Jersey resource configuration.
    *
    * @param resourceConfig the Jersey resource configuration to extend
    */
@@ -50,5 +52,6 @@ public class XmlAdapterParamExtension extends PrioritizedResourceConfigExtension
   public void apply (ResourceConfig resourceConfig) {
 
     resourceConfig.register(XmlAdapterParamConverterProvider.class, getPriority());
+    resourceConfig.register(new XmlJavaTypeAdapterDynamicFeature(getPriority()), getPriority());
   }
 }

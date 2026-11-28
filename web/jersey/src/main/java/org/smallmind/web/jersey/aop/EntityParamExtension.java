@@ -42,7 +42,7 @@ import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 public class EntityParamExtension extends PrioritizedResourceConfigExtension {
 
   /**
-   * Registers the request filter, validation context resolver, and entity parameter feature into the supplied
+   * Registers the resource method dynamic feature, validation context resolver, and entity parameter feature into the supplied
    * resource configuration.
    *
    * @param resourceConfig the Jersey resource configuration to augment
@@ -50,7 +50,7 @@ public class EntityParamExtension extends PrioritizedResourceConfigExtension {
   @Override
   public void apply (ResourceConfig resourceConfig) {
 
-    resourceConfig.register(ResourceMethodFilter.class, getPriority());
+    resourceConfig.register(new ResourceMethodDynamicFeature(getPriority()), getPriority());
     resourceConfig.register(EntityAwareContextResolver.class, getPriority());
     resourceConfig.register(new EntityParamResolver.EntityParamFeature(), getPriority());
   }
